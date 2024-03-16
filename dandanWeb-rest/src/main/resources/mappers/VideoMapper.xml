@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xyz.ezsky.dao.VideoMapper">
+
+    <resultMap id="videoResultMap" type="xyz.ezsky.entity.vo.VideoVo">
+        <id property="id" column="id"/>
+        <result property="filePath" column="file_path"/>
+        <result property="fileName" column="file_name"/>
+        <result property="fileSize" column="file_size"/>
+        <result property="hashValue" column="hash_value"/>
+        <result property="fileExtension" column="file_extension"/>
+        <result property="episodeId" column="episode_id"/>
+        <result property="animeId" column="anime_id"/>
+        <result property="animeTitle" column="anime_title"/>
+        <result property="episodeTitle" column="episode_title"/>
+        <result property="type" column="type"/>
+        <result property="typeDescription" column="type_description"/>
+        <result property="shift" column="shift"/>
+    </resultMap>
+
+    <insert id="insertVideo"  parameterType="xyz.ezsky.entity.vo.VideoVo">
+        INSERT INTO video_metadata (file_path, file_name, file_size, hash_value, file_extension, episode_id, anime_id, anime_title, episode_title, type, type_description, shift)
+        VALUES (#{filePath}, #{fileName}, #{fileSize}, #{hashValue}, #{fileExtension}, #{episodeId}, #{animeId}, #{animeTitle}, #{episodeTitle}, #{type}, #{typeDescription}, #{shift})
+    </insert>
+    <!-- 根据id查询单个视频信息 -->
+    <select id="selectVideoById" parameterType="Integer"  resultMap="videoResultMap">
+        SELECT * FROM video_metadata WHERE id = #{id}
+    </select>
+
+    <!-- 查询所有视频信息 -->
+    <select id="selectAllVideos"  resultMap="videoResultMap">
+        SELECT * FROM video_metadata
+    </select>
+    <!-- 更新视频信息 -->
+    <update id="updateVideo" parameterType="xyz.ezsky.entity.vo.VideoVo">
+        UPDATE video_metadata
+        <set>
+            <if test="filePath != null">file_path = #{filePath},</if>
+            <if test="fileName != null">file_name = #{fileName},</if>
+            <if test="fileSize != null">file_size = #{fileSize},</if>
+            <if test="hashValue != null">hash_value = #{hashValue},</if>
+            <if test="fileExtension != null">file_extension = #{fileExtension},</if>
+            <if test="episodeId != null">episode_id = #{episodeId},</if>
+            <if test="animeId != null">anime_id = #{animeId},</if>
+            <if test="animeTitle != null">anime_title = #{animeTitle},</if>
+            <if test="episodeTitle != null">episode_title = #{episodeTitle},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="typeDescription != null">type_description = #{typeDescription},</if>
+            <if test="shift != null">shift = #{shift}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    <!-- 根据id删除视频信息 -->
+    <delete id="deleteVideoById" parameterType="Integer">
+        DELETE FROM video_metadata WHERE id = #{id}
+    </delete>
+</mapper>
+

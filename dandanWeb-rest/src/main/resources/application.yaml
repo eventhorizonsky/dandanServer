@@ -1,0 +1,11 @@
+mybatis: #mybatis配置
+  mapper-locations: classpath:mappers/*.xml
+  type-aliases-package: xyz.ezsky.entity
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/dandanweb?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC
+    username: root
+    password: password
+server: #程序访问端口号
+  port: 8081
