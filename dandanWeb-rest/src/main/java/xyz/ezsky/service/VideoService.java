@@ -1,13 +1,12 @@
 package xyz.ezsky.service;
 
-import xyz.ezsky.entity.vo.User;
 import xyz.ezsky.entity.vo.VideoVo;
 
 import java.util.List;
 
 public interface VideoService {
 
-    public void addVideo(List<VideoVo> videoVoList);
+    public void addVideo(VideoVo videoVoList);
 
     VideoVo getVideoById(Integer id);
     List<VideoVo> getAllVideos();

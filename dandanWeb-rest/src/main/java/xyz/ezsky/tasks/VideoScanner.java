@@ -7,12 +7,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Logger;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import xyz.ezsky.entity.vo.VideoVo;
@@ -20,94 +23,149 @@ import xyz.ezsky.service.VideoService;
 import xyz.ezsky.utils.FileTool;
 
 @Component
+@Slf4j
 public class VideoScanner {
 
     @Autowired
     private VideoService videoService;
+    @Value("${danDanWeb.scanPath}")
+    private String scanPath;
+    @Value("${danDanWeb.tempPath}")
+    private String tempPath;
+    @Value("${danDanWeb.targetPath}")
+    private String targetPath;
+    @Value("${danDanWeb.failedPath}")
+    private String failedPath;
+    @Value("${danDanApi.match}")
+    private String matchApi;
 
-    @Scheduled(fixedRate = 60000) // 每10分钟执行一次
+    @Scheduled(cron  = "${danDanWeb.cron}")
     public void scanVideos() {
-        String directoryPath = "G:\\动漫";
+        String directoryPath = scanPath;
         List<VideoVo> videoVoList=scanDirectory(directoryPath);
-        OkHttpClient client = new OkHttpClient();
-        List<JSONObject> requests = new ArrayList<>();
-        if (videoVoList == null) {
-            System.out.println("当前目录没有新的视频，扫描停止");
+        if (videoVoList == null || videoVoList.isEmpty()) {
+            log.info("当前目录没有新的视频，扫描停止");
             return;
         }
         for (VideoVo video : videoVoList) {
-            JSONObject requestObject = new JSONObject();
-            requestObject.put("fileName", video.getFileName());
-            requestObject.put("fileHash", video.getHashValue());
-            requestObject.put("fileSize", video.getFileSize());
-            requestObject.put("matchMode", "hashAndFileName");
-            requests.add(requestObject);
+           autoScanVideo(video);
         }
+    }
+    public void autoScanVideo(VideoVo video){
+        OkHttpClient client = new OkHttpClient();
+        String url = matchApi;
         JSONObject requestBody = new JSONObject();
-        requestBody.put("requests", requests);
-
-        String url = "https://api.dandanplay.net/api/v2/match/batch";
+        requestBody.put("fileName", video.getFileName());
+        requestBody.put("fileHash", video.getHashValue());
+        requestBody.put("fileSize", video.getFileSize());
+        requestBody.put("matchMode", "hashAndFileName");
         RequestBody body = RequestBody.create(JSON.toJSONString(requestBody), MediaType.get("application/json"));
         Request request = new Request.Builder()
                 .url(url)
                 .post(body)
                 .build();
+        try {
+            Response response = client.newCall(request).execute();
+            if (response.isSuccessful()&&response.body()!=null) {
+                String responseBody = response.body().string();
+                JSONObject responseObject = JSON.parseObject(responseBody);
+                boolean isMatched=responseObject.getBoolean("isMatched");
+                JSONArray results = responseObject.getJSONArray("matches");
 
-            try {
-                Response response = client.newCall(request).execute();
-                if (response.isSuccessful()) {
-                    String responseBody = response.body().string();
-                    JSONObject responseObject = JSON.parseObject(responseBody);
-                    JSONArray results = responseObject.getJSONArray("results");
-
-                    if (results != null && !results.isEmpty()) {
-                        for (int i = 0; i < results.size(); i++) {
-                            JSONObject matchResult = results.getJSONObject(i).getJSONObject("matchResult");
-
-                            int episodeId = matchResult.getIntValue("episodeId");
-                            int animeId = matchResult.getIntValue("animeId");
-                            String animeTitle = matchResult.getString("animeTitle");
-                            String episodeTitle = matchResult.getString("episodeTitle");
-                            String type = matchResult.getString("type");
-                            String typeDescription = matchResult.getString("typeDescription");
-                            int shift = matchResult.getIntValue("shift");
-                            videoVoList.get(i).setAnimeId(animeId);
-                            videoVoList.get(i).setEpisodeId(episodeId);
-                            videoVoList.get(i).setAnimeTitle(animeTitle);
-                            videoVoList.get(i).setEpisodeTitle(episodeTitle);
-                            videoVoList.get(i).setType(type);
-                            videoVoList.get(i).setTypeDescription(typeDescription);
-                            videoVoList.get(i).setShift(shift);
-                            File destDirectory = new File("G:\\newanime\\" + animeTitle);
-                            destDirectory.mkdirs();
-                            File sourceFile = new File(videoVoList.get(i).getFilePath());
-                            File destFile = new File(destDirectory, episodeTitle+"."+videoVoList.get(i).getFileExtension());
-
-                            Files.move(sourceFile.toPath(), destFile.toPath());
-                            videoVoList.get(i).setFilePath(destFile.getPath());
-                            System.out.println(videoVoList.get(i).getFileName()+"迁移成功");
+                if (isMatched && !results.isEmpty()) {
+                    log.info(video.getFileName()+"找到了匹配的弹幕，将自动进行刮削");
+                    setVideoInfo(results,video);
+                    File destDirectory = new File(targetPath + video.getAnimeTitle());
+                    try{
+                        destDirectory.mkdirs();
+                        File sourceFile = new File(video.getFilePath());
+                        String baseName= video.getEpisodeTitle().replaceAll("/", Integer.toString("/".hashCode()));
+                        File destFile = new File(destDirectory, baseName+"."+video.getFileExtension());
+                        int count = 1;
+                        while (destFile.exists()) {
+                            log.info(destFile.getName()+"已存在，进行重命名");
+                            String newName = baseName + "(" + count + ")." + video.getFileExtension();
+                            destFile = new File(destDirectory, newName);
+                            count++;
                         }
-                        videoService.addVideo(videoVoList);
+                        Files.move(sourceFile.toPath(), destFile.toPath());
+                        video.setFilePath(destFile.getPath());
+                        log.info(video.getFileName()+"迁移成功");
+                        video.setMatched("1");
+                        videoService.addVideo(video);
+                    }catch (Exception e){
+                        log.error("迁移失败："+e.getLocalizedMessage());
                     }
-                } else {
-                    System.err.println("Request failed with code: " + response.code());
+
+                }else if(!isMatched&&!results.isEmpty()){
+                    log.info(video.getFileName()+"没有找到文件的弹幕，自动选用最接近的内容，放置在temp目录");
+                    setVideoInfo(results,video);
+                    File destDirectory = new File(tempPath + video.getAnimeTitle());
+                    try{
+                        destDirectory.mkdirs();
+                        File sourceFile = new File(video.getFilePath());
+                        File destFile = new File(destDirectory, video.getFileName());
+                        Files.move(sourceFile.toPath(), destFile.toPath());
+                        video.setFilePath(destFile.getPath());
+                        System.out.println(video.getFileName()+"迁移成功");
+                        video.setMatched("2");
+                        videoService.addVideo(video);
+                    }catch (Exception e){
+                        log.error("迁移失败："+e.getLocalizedMessage());
+                    }
+
+                }else {
+                    log.info(video.getFileName()+"未能成功匹配");
+                    File destDirectory = new File(failedPath + video.getAnimeTitle());
+                    try{
+                        destDirectory.mkdirs();
+                        File sourceFile = new File(video.getFilePath());
+                        File destFile = new File(destDirectory, video.getFileName());
+                        Files.move(sourceFile.toPath(), destFile.toPath());
+                        video.setFilePath(destFile.getPath());
+                        System.out.println(video.getFileName()+"迁移成功");
+                        video.setMatched("0");
+                        videoService.addVideo(video);
+                    }catch (Exception e){
+                        log.error("迁移失败："+e.getLocalizedMessage());
+                    }
+
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
+            } else {
+                log.error(video.getFileName()+"匹配失败");
+                log.error("Request failed with code: " + response.code());
             }
-
+        } catch (IOException e) {
+            log.error(e.getLocalizedMessage());
+        }
     }
-
+    private void setVideoInfo(JSONArray results,VideoVo video){
+        JSONObject matchResult = results.getJSONObject(0);
+        int episodeId = matchResult.getIntValue("episodeId");
+        int animeId = matchResult.getIntValue("animeId");
+        String animeTitle = matchResult.getString("animeTitle");
+        String episodeTitle = matchResult.getString("episodeTitle");
+        String type = matchResult.getString("type");
+        String typeDescription = matchResult.getString("typeDescription");
+        int shift = matchResult.getIntValue("shift");
+        video.setAnimeId(animeId);
+        video.setEpisodeId(episodeId);
+        video.setAnimeTitle(animeTitle);
+        video.setEpisodeTitle(episodeTitle);
+        video.setType(type);
+        video.setTypeDescription(typeDescription);
+        video.setShift(shift);
+    }
     private List<VideoVo> scanDirectory(String directoryPath) {
         File directory = new File(directoryPath);
         if (!directory.exists() || !directory.isDirectory()) {
-            System.out.println("目录不存在或不是一个有效的目录：" + directoryPath);
+            log.info("目录不存在或不是一个有效的目录：" + directoryPath);
             return null;
         }
 
         File[] files = directory.listFiles();
         if (files == null || files.length == 0) {
-            System.out.println("目录为空：" + directoryPath);
+            log.info("目录为空：" + directoryPath);
             return null;
         }
         List<VideoVo> videoVoList=new ArrayList<>();
@@ -116,7 +174,7 @@ public class VideoScanner {
                 videoVoList.add(extractVideoInfo(file.getAbsolutePath()));
             }
             if(videoVoList.size()>20){
-                System.out.println("一次性扫描20个文件");
+                log.info("一次性扫描20个文件");
                 break;
             }
         }
@@ -131,8 +189,7 @@ public class VideoScanner {
     }
 
     private VideoVo extractVideoInfo(String filePath) {
-        // 调用解析视频信息的方法，这里使用你实际的解析逻辑
-        System.out.println("解析视频文件信息：" + filePath);
+        log.info("解析视频文件信息：" + filePath);
         return FileTool.extractVideoInfo(filePath);
     }
 }

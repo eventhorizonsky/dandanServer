@@ -33,6 +33,8 @@ public class VideoVo {
     private String typeDescription;
     //弹幕偏移时间（弹幕应延迟多少秒出现）。此数字为负数时表示弹幕应提前多少秒出现。
     private int shift;
+    //是否匹配成功，0为未匹配，1为成功匹配，2为临时匹配
+    private String Matched;
 
     public VideoVo() {
     }
