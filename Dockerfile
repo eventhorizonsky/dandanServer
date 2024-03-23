@@ -1,18 +1,9 @@
-FROM openjdk:8-jre-alpine
+FROM docker.io/relateiq/oracle-java8
+#VOLUME /tmp
+ADD jdandanWeb-rest/target/dandanWeb-rest.jar app.jar
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+#RUN bash -c 'touch /app.jar'
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
 
-WORKDIR /app
-
-# 将应用程序jar文件复制到容器中
-COPY dandanWeb-rest/target/dandanWeb-rest.jar
-
-# 将初始化脚本复制到容器中
-COPY init_db.sh init_db.sh
-
-# 设置脚本执行权限
-RUN chmod +x init_db.sh
-
-# 设置启动命令
-CMD ["./init_db.sh && java -jar my-application.jar"]
-
-# 指定Volume
-VOLUME /app/data
