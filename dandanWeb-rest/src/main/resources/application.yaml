@@ -15,3 +15,10 @@ danDanWeb:
   cron: 30 * * * * ?
 danDanApi:
   match: https://api.dandanplay.net/api/v2/match
+database:
+  create:
+    table:
+      sql:
+        file: createtable.sql
+  file:
+    path: database.db
