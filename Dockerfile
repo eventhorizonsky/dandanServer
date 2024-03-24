@@ -1,5 +1,9 @@
 FROM  openjdk:8
-#VOLUME /tmp
+RUN mkdir -p /config
+RUN mkdir -p /media
+# 设置环境变量，用于用户指定媒体目录和配置目录
+ENV MEDIA_DIR /media
+ENV CONFIG_DIR /config
 ADD dandanWeb-rest/target/dandanWeb-rest.jar app.jar
 ENV LANG=C.UTF-8
 ENV LANGUAGE C.UTF-8
