@@ -1,4 +1,4 @@
-FROM  openjdk:8
+FROM openjdk:8
 FROM nginx:latest
 #创建响应文件夹
 RUN mkdir -p /app/config
@@ -13,7 +13,6 @@ ENV LANG=C.UTF-8
 ENV LANGUAGE C.UTF-8
 ENV LC_ALL=C.UTF-8
 EXPOSE 80
-CMD service nginx start
 #运行程序主体
 ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
 
