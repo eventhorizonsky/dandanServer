@@ -9,10 +9,7 @@ ADD dandanWeb-rest/target/dandanWeb-rest.jar app.jar
 ENV LANG=C.UTF-8
 ENV LANGUAGE C.UTF-8
 ENV LC_ALL=C.UTF-8
+EXPOSE 8081
 #运行程序主体
 ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
-FROM nginx:latest
-ADD dandan-web/dist/ /usr/share/nginx/html
-ADD dandan-web/default.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-CMD service nginx start
+
