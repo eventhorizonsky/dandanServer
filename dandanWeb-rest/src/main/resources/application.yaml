@@ -8,10 +8,10 @@ spring:
 server: #程序访问端口号
   port: 8081
 danDanWeb:
-  scanPath: media/source
-  targetPath: media/target/
-  tempPath: media/temp/
-  failedPath: media/source/failed/
+  scanPath: app/media/source
+  targetPath: app/media/target/
+  tempPath: app/media/temp/
+  failedPath: app/media/source/failed/
   cron: 30 * * * * ?
 danDanApi:
   match: https://api.dandanplay.net/api/v2/match
@@ -21,4 +21,4 @@ database:
       sql:
         file: createtable.sql
   file:
-    path: config/database.db
+    path: app/config/database.db
