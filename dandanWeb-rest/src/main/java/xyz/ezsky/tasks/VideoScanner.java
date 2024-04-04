@@ -174,7 +174,9 @@ public class VideoScanner {
         List<VideoVo> videoVoList = new ArrayList<>();
         for (File file : files) {
             if (file.isFile() && isVideoFile(file.getName())) {
-                if(isMatched(file)){
+                if(isDownloading(file)){
+                    log.info(file.getName()+"正在下载中，跳过");
+                }else{
                     videoVoList.add(extractVideoInfo(file.getAbsolutePath()));
                 }
             }
@@ -187,24 +189,10 @@ public class VideoScanner {
     }
 
 
-    private boolean isMatched(File file) {
-        VideoVo videoVo=videoService.getNotMatchedVideoByName(file.getName());
-        VideoVo fileMsg=extractVideoInfo(file.getPath());
-        if(videoVo!=null){
-            if(videoVo.getFileSize()==fileMsg.getFileSize()){
-                log.info(file.getName()+"文件下载完成了，入库！");
-                videoService.deleteVideoById(videoVo.getId());
-                return true;
-            }else {
-                log.info(file.getName()+"文件还在下载中，跳过");
-                return false;
-            }
-        }else{
-            log.info(file.getName()+"文件第一次被扫描");
-            fileMsg.setMatched("0");
-            videoService.addVideo(fileMsg);
-            return false;
-        }
+    private boolean isDownloading(File file) {
+        long currentTime = System.currentTimeMillis();
+        long fiveMinutesAgo = currentTime - (5 * 60 * 1000); // 5 minutes in milliseconds
+        return file.lastModified() < fiveMinutesAgo;
 
     }
 
