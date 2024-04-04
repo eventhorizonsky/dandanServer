@@ -15,4 +15,6 @@ public interface VideoService {
 
     void deleteVideoById(Integer id);
 
+    VideoVo getNotMatchedVideoByName(String fileName);
+
 }

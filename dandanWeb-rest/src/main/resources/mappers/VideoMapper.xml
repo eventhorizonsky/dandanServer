@@ -58,5 +58,9 @@
     <delete id="deleteVideoById" parameterType="Integer">
         DELETE FROM video_metadata WHERE id = #{id}
     </delete>
+
+    <select id="getNotMatchedVideoByName" resultMap="videoResultMap">
+        SELECT * FROM video_metadata WHERE file_name = #{fileName} and matched='0'
+    </select>
 </mapper>
 

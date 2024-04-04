@@ -173,8 +173,10 @@ public class VideoScanner {
         }
         List<VideoVo> videoVoList = new ArrayList<>();
         for (File file : files) {
-            if (file.isFile() && isVideoFile(file.getName()) && !isFileLocked(file)) {
-                videoVoList.add(extractVideoInfo(file.getAbsolutePath()));
+            if (file.isFile() && isVideoFile(file.getName())) {
+                if(isMatched(file)){
+                    videoVoList.add(extractVideoInfo(file.getAbsolutePath()));
+                }
             }
             if (videoVoList.size() > 20) {
                 log.info("一次性扫描20个文件");
@@ -185,15 +187,25 @@ public class VideoScanner {
     }
 
 
-    private boolean isFileLocked(File file) {
-        try (RandomAccessFile raf = new RandomAccessFile(file, "rw");
-             FileChannel channel = raf.getChannel()) {
-            FileLock lock = channel.tryLock();
-            return lock == null;
-        } catch (IOException e) {
-            log.info("当前读取的【" + file.getName() + "】正在写入中，停止读取");
-            return true;
+    private boolean isMatched(File file) {
+        VideoVo videoVo=videoService.getNotMatchedVideoByName(file.getName());
+        VideoVo fileMsg=extractVideoInfo(file.getPath());
+        if(videoVo!=null){
+            if(videoVo.getFileSize()==fileMsg.getFileSize()){
+                log.info(file.getName()+"文件下载完成了，入库！");
+                videoService.deleteVideoById(videoVo.getId());
+                return true;
+            }else {
+                log.info(file.getName()+"文件还在下载中，跳过");
+                return false;
+            }
+        }else{
+            log.info(file.getName()+"文件第一次被扫描");
+            fileMsg.setMatched("0");
+            videoService.addVideo(fileMsg);
+            return false;
         }
+
     }
 
     private boolean isVideoFile(String fileName) {

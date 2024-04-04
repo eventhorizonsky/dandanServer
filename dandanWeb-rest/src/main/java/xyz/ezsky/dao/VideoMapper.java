@@ -18,5 +18,7 @@ public interface VideoMapper {
     void updateVideo(VideoVo video);
 
     void deleteVideoById(Integer id);
+
+    VideoVo getNotMatchedVideoByName(String fileName);
 }
 

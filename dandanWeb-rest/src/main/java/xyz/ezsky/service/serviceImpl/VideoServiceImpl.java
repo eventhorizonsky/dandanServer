@@ -66,4 +66,9 @@ public class VideoServiceImpl implements VideoService {
         videoMapper.deleteVideoById(id);
     }
 
+    @Override
+    public VideoVo getNotMatchedVideoByName(String fileName) {
+        return videoMapper.getNotMatchedVideoByName(fileName);
+    }
+
 }
