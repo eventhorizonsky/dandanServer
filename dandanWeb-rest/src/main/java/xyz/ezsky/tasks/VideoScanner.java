@@ -192,7 +192,7 @@ public class VideoScanner {
     private boolean isDownloading(File file) {
         long currentTime = System.currentTimeMillis();
         long fiveMinutesAgo = currentTime - (5 * 60 * 1000); // 5 minutes in milliseconds
-        return file.lastModified() < fiveMinutesAgo;
+        return file.lastModified() > fiveMinutesAgo;
 
     }
 
