@@ -114,12 +114,7 @@ public class VideoController {
 
                 File file = new File(srcFile.getPath());
                 if(file.exists()) {
-                    HttpHeaders headers = new HttpHeaders();
-                    headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-                    headers.setContentLength(file.length());
-                    headers.setContentDispositionFormData("attachment", srcFile.getName());
                     return ResponseEntity.ok()
-                            .headers(headers)
                             .body(new FileSystemResource(file));
                 } else {
                     return ResponseEntity.notFound().build();
