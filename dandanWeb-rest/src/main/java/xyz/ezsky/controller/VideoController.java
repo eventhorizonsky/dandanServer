@@ -102,7 +102,7 @@ public class VideoController {
                     ffmpeg.addArgument("-i");
                     ffmpeg.addArgument(videoFile.getPath()); // 使用视频文件的实际路径
                     ffmpeg.addArgument("-map");
-                    ffmpeg.addArgument("0:"+tracks); // 提取指定字幕轨道
+                    ffmpeg.addArgument("0:s:"+tracks); // 提取指定字幕轨道
                     ffmpeg.addArgument("-f");
                     ffmpeg.addArgument("ass"); // 指定输出字幕格式
                     ffmpeg.addArgument(srcFile.getPath()); // 输出到标准输出流
@@ -190,7 +190,6 @@ public class VideoController {
 
         for (String line : subtitleInfo) {
             if (line.contains("Stream #")) {
-                trackIndex = line.split("#")[1].trim().split(":")[1].split("\\(")[0];
                 if (line.contains("default")) {
                     if (!defaultExists) {
                         isDefault = true;
@@ -200,18 +199,18 @@ public class VideoController {
                 title = line.split("title\\s*:\\s*")[1].trim();
             }
         }
-
-        if (!trackIndex.isEmpty() && !title.isEmpty()) {
             Subtitle subtitle = new Subtitle();
-            subtitle.setName(title);
-            subtitle.setUrl("/api/videos/" + id + "/subtitle?tracks=" + trackIndex);
+        if (title.isEmpty()){
+            title="字幕"+subtitles.size();
+        }
+        subtitle.setName(title);
+            subtitle.setUrl("/api/videos/" + id + "/subtitle?tracks=" + subtitles.size());
             if (defaultExists) {
                 subtitle.setDefault(false); // Set default to false if a default already exists
             } else {
                 subtitle.setDefault(isDefault);
             }
             subtitles.add(subtitle);
-        }
     }
 
 
