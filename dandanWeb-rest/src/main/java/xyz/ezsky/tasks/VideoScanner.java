@@ -41,7 +41,6 @@ public class VideoScanner {
         String directoryPath = scanPath;
         List<VideoVo> videoVoList=scanDirectory(directoryPath);
         if (videoVoList == null || videoVoList.isEmpty()) {
-            log.info("当前目录没有新的视频，扫描停止");
             return;
         }
         for (VideoVo video : videoVoList) {
