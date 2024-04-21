@@ -9,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.Enumeration;
 
 @RestController
 @RequestMapping("/dandanapi/api/v2")
@@ -29,9 +30,9 @@ public class ProxyController {
         if (queryString != null) {
             externalUrl = externalUrl + "?" + queryString;
         }
-
         Request httpRequest = new Request.Builder()
                 .url(externalUrl)
+                .addHeader("Authorization",request.getHeader("Authorization")==null?"":request.getHeader("Authorization"))
                 .build();
 
         try (Response response = client.newCall(httpRequest).execute()) {
@@ -44,6 +45,7 @@ public class ProxyController {
             return responseBody;
         }
     }
+
 
     @PostMapping("/**")
     public ResponseEntity<Object> postRequest(HttpServletRequest request, @RequestBody(required = false) Object requestBody) {
