@@ -32,7 +32,7 @@
 
     <!-- 查询所有视频信息 -->
     <select id="selectAllVideos"  resultMap="videoResultMap">
-        SELECT * FROM video_metadata
+        SELECT * FROM video_metadata ORDER BY id DESC;
     </select>
     <!-- 更新视频信息 -->
     <update id="updateVideo" parameterType="xyz.ezsky.entity.vo.VideoVo">
