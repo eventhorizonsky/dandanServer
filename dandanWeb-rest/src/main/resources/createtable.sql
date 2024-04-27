@@ -14,3 +14,19 @@ CREATE TABLE IF NOT EXISTS video_metadata(
     shift INTEGER,
     matched TEXT
 );
+CREATE TABLE config (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  key TEXT,
+  value TEXT
+);
+CREATE TABLE scan_path (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  path TEXT
+);
+CREATE TABLE subtitles (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  path TEXT,
+  video_id INTEGER,
+  subtitle_name TEXT,
+  is_default integer
+);

@@ -34,6 +34,10 @@
     <select id="selectAllVideos"  resultMap="videoResultMap">
         SELECT * FROM video_metadata ORDER BY id DESC;
     </select>
+    <!-- 查询所有视频信息 -->
+    <select id="selectAllVideosNotMatch"  resultMap="videoResultMap">
+        SELECT * FROM video_metadata where matched='0' ORDER BY id DESC;
+    </select>
     <!-- 更新视频信息 -->
     <update id="updateVideo" parameterType="xyz.ezsky.entity.vo.VideoVo">
         UPDATE video_metadata
@@ -61,6 +65,20 @@
 
     <select id="getNotMatchedVideoByName" resultMap="videoResultMap">
         SELECT * FROM video_metadata WHERE file_name = #{fileName} and matched='0'
+    </select>
+
+    <select id="selectVideoByFilePath" resultMap="videoResultMap">
+        SELECT * FROM video_metadata WHERE file_path = #{filePath}
+    </select>
+
+    <delete id="deleteVideoByFilePath">
+        DELETE FROM video_metadata WHERE file_path = #{filePath}
+    </delete>
+
+    <select id="selectVideoBySubtitle" resultMap="videoResultMap">
+        SELECT * FROM video_metadata
+        WHERE #{filePath}
+        LIKE substr(file_path, 1, LENGTH(file_path) - INSTR(REVERSE(file_path), '.')) || '%';
     </select>
 </mapper>
 

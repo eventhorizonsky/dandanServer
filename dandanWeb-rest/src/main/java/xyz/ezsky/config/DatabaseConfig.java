@@ -1,19 +1,26 @@
 package xyz.ezsky.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.sqlite.SQLiteDataSource;
+import xyz.ezsky.dao.ScanPathMapper;
+import xyz.ezsky.entity.AppConfig;
+import xyz.ezsky.service.ConfigService;
+import xyz.ezsky.tasks.VideoScanner;
 
 import javax.annotation.PostConstruct;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 @Configuration
 public class DatabaseConfig {
@@ -25,6 +32,17 @@ public class DatabaseConfig {
 
     @Value("${database.create.table.sql.file}")
     private String createTableSqlFile;
+
+    @Autowired
+    private VideoScanner videoScanner;
+
+    @Autowired
+    private ConfigService configService;
+
+    @Autowired
+    private ScanPathMapper scanPathMapper;
+    @Autowired
+    private AppConfig appConfig;
 
     public DatabaseConfig(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
@@ -38,17 +56,31 @@ public class DatabaseConfig {
     }
 
     @PostConstruct
-    private void createTable() {
+    private void init() {
+        // 检查数据库文件是否存在
+        File dbFile = new File(dbFilePath);
+        if (dbFile.exists()) {
+            List<String> paths=scanPathMapper.selectAllScanPath();
+            for(String path:paths){
+                configService.addPathScan(path);
+            }
+            videoScanner.startScanVideos("44 * * * * ?");
+            // 如果数据库文件已经存在，则不执行创建表的操作
+            return;
+        }
         try (Connection connection = dataSource().getConnection();
              Statement statement = connection.createStatement()) {
             // 读取 SQL 文件中的建表语句
             String createTableQuery = loadSqlFromFile(createTableSqlFile);
             statement.executeUpdate(createTableQuery);
+            appConfig.setFirstTime(true);
+            videoScanner.startScanVideos("44 * * * * ?");
         } catch (SQLException | IOException e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to create table.", e);
         }
     }
+
 
     private String loadSqlFromFile(String sqlFilePath) throws IOException {
         Resource resource = resourceLoader.getResource("classpath:" + sqlFilePath);

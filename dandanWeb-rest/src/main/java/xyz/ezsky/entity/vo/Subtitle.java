@@ -1,16 +1,38 @@
 package xyz.ezsky.entity.vo;
 
 public class Subtitle {
-    private String name;
+
+    private long id;
+
+    private String path;
+    private String subtitleName;
     private String url;
     private boolean isDefault;
 
-    public String getName() {
-        return name;
+    private long videoId;
+
+    public long getId() {
+        return id;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public String getSubtitleName() {
+        return subtitleName;
+    }
+
+    public void setSubtitleName(String subtitleName) {
+        this.subtitleName = subtitleName;
     }
 
     public String getUrl() {
@@ -27,5 +49,13 @@ public class Subtitle {
 
     public void setDefault(boolean aDefault) {
         isDefault = aDefault;
+    }
+
+    public long getVideoId() {
+        return videoId;
+    }
+
+    public void setVideoId(long videoId) {
+        this.videoId = videoId;
     }
 }

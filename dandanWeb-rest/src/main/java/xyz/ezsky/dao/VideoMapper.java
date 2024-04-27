@@ -9,16 +9,24 @@ import java.util.List;
 @Mapper
 public interface VideoMapper {
 
-    void insertVideo(VideoVo videoVo);
+    Long insertVideo(VideoVo videoVo);
 
     VideoVo selectVideoById(Integer id);
 
     List<VideoVo> selectAllVideos();
+
+    List<VideoVo> selectAllVideosNotMatch();
 
     void updateVideo(VideoVo video);
 
     void deleteVideoById(Integer id);
 
     VideoVo getNotMatchedVideoByName(String fileName);
+
+    List<VideoVo> selectVideoByFilePath(String filePath);
+
+    List<VideoVo> selectVideoBySubtitle(String filePath);
+
+    void deleteVideoByFilePath(String filePath);
 }
 

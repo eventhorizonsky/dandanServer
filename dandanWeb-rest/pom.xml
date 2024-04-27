@@ -92,6 +92,11 @@
             <artifactId>jave-all-deps</artifactId>
             <version>3.5.0</version>
         </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.13.0</version>
+        </dependency>
     </dependencies>
 
     <repositories>

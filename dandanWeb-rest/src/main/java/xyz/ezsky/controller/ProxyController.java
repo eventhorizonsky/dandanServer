@@ -3,6 +3,7 @@ package xyz.ezsky.controller;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -15,11 +16,8 @@ import java.util.Enumeration;
 @RequestMapping("/dandanapi/api/v2")
 public class ProxyController {
 
-    private final RestTemplate restTemplate;
-
-    public ProxyController(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
+    @Autowired
+    private  RestTemplate restTemplate;
 
     @GetMapping("/**")
     public Object getRequest(HttpServletRequest request) throws IOException {

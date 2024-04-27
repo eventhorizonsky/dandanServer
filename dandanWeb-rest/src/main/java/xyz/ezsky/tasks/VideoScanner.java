@@ -7,8 +7,14 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
+import xyz.ezsky.dao.SubtitleMapper;
+import xyz.ezsky.dao.VideoMapper;
+import xyz.ezsky.entity.AppConfig;
+import xyz.ezsky.entity.vo.Subtitle;
 import xyz.ezsky.entity.vo.VideoVo;
 import xyz.ezsky.service.VideoService;
 import xyz.ezsky.utils.FileTool;
@@ -18,6 +24,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ScheduledFuture;
 
 @Component
 @Slf4j
@@ -25,22 +33,52 @@ public class VideoScanner {
 
     @Autowired
     private VideoService videoService;
-    @Value("${danDanWeb.scanPath}")
-    private String scanPath;
-    @Value("${danDanWeb.tempPath}")
-    private String tempPath;
-    @Value("${danDanWeb.targetPath}")
-    private String targetPath;
-    @Value("${danDanWeb.failedPath}")
-    private String failedPath;
     @Value("${danDanApi.match}")
     private String matchApi;
 
-    @Scheduled(cron  = "${danDanWeb.cron}")
+    @Autowired
+    private AppConfig appConfig;
+
+    @Autowired
+    private TaskScheduler taskScheduler;
+    @Autowired
+    private VideoMapper videoMapper;
+    @Autowired
+    private SubtitleMapper subtitleMapper;
+
+    private ScheduledFuture<?> scheduledFuture;
+
+    public void startScanVideos(String cronExpression) {
+        if (scheduledFuture != null && !scheduledFuture.isDone()) {
+            scheduledFuture.cancel(true);
+        }
+
+        scheduledFuture = taskScheduler.schedule(this::scan, new CronTrigger(cronExpression));
+    }
+
+    public void stopScanVideos() {
+        if (scheduledFuture != null) {
+            scheduledFuture.cancel(true);
+        }
+    }
+    public void scan(){
+        scanVideos();
+        scanSrt();
+    }
+    public void scanSrt(){
+        List<Subtitle> subtitles=subtitleMapper.selectSubtitleNotMatch();
+        if (subtitles.isEmpty()) {
+            return;
+        }
+        for(Subtitle subtitle:subtitles){
+            List<VideoVo> videoVos= videoMapper.selectVideoBySubtitle(subtitle.getPath().substring(0, subtitle.getPath().lastIndexOf(".")));
+            subtitle.setVideoId(videoVos.get(0).getId());
+            subtitleMapper.updateSubtitle(subtitle);
+        }
+    }
     public void scanVideos() {
-        String directoryPath = scanPath;
-        List<VideoVo> videoVoList=scanDirectory(directoryPath);
-        if (videoVoList == null || videoVoList.isEmpty()) {
+        List<VideoVo> videoVoList=videoMapper.selectAllVideosNotMatch();
+        if (videoVoList.isEmpty()) {
             return;
         }
         for (VideoVo video : videoVoList) {
@@ -48,6 +86,11 @@ public class VideoScanner {
         }
     }
     public void autoScanVideo(VideoVo video){
+        File targetFile=new File(video.getFilePath());
+        if(isDownloading(targetFile)){
+            log.info(targetFile.getName()+"正在下载中，跳过");
+            return;
+        }
         OkHttpClient client = new OkHttpClient();
         String url = matchApi;
         JSONObject requestBody = new JSONObject();
@@ -71,24 +114,24 @@ public class VideoScanner {
                 if (isMatched && !results.isEmpty()) {
                     log.info(video.getFileName()+"找到了匹配的弹幕，将自动进行刮削");
                     setVideoInfo(results,video);
-                    File destDirectory = new File(targetPath + video.getAnimeTitle());
+//                    File destDirectory = new File(targetPath + video.getAnimeTitle());
                     try{
-                        destDirectory.mkdirs();
-                        File sourceFile = new File(video.getFilePath());
-                        String baseName= video.getEpisodeTitle().replaceAll("/", Integer.toString("/".hashCode()));
-                        File destFile = new File(destDirectory, baseName+"."+video.getFileExtension());
-                        int count = 1;
-                        while (destFile.exists()) {
-                            log.info(destFile.getName()+"已存在，进行重命名");
-                            String newName = baseName + "(" + count + ")." + video.getFileExtension();
-                            destFile = new File(destDirectory, newName);
-                            count++;
-                        }
-                        Files.move(sourceFile.toPath(), destFile.toPath());
-                        video.setFilePath(destFile.getPath());
-                        log.info(video.getFileName()+"迁移成功");
+//                        destDirectory.mkdirs();
+//                        File sourceFile = new File(video.getFilePath());
+//                        String baseName= video.getEpisodeTitle().replaceAll("/", Integer.toString("/".hashCode()));
+//                        File destFile = new File(destDirectory, baseName+"."+video.getFileExtension());
+//                        int count = 1;
+//                        while (destFile.exists()) {
+//                            log.info(destFile.getName()+"已存在，进行重命名");
+//                            String newName = baseName + "(" + count + ")." + video.getFileExtension();
+//                            destFile = new File(destDirectory, newName);
+//                            count++;
+//                        }
+//                        Files.move(sourceFile.toPath(), destFile.toPath());
+//                        video.setFilePath(destFile.getPath());
+//                        log.info(video.getFileName()+"迁移成功");
                         video.setMatched("1");
-                        videoService.addVideo(video);
+                        videoMapper.updateVideo(video);
                     }catch (Exception e){
                         log.error("迁移失败："+e.getLocalizedMessage());
                     }
@@ -96,32 +139,32 @@ public class VideoScanner {
                 }else if(!isMatched&&!results.isEmpty()){
                     log.info(video.getFileName()+"没有找到文件的弹幕，自动选用最接近的内容，放置在temp目录");
                     setVideoInfo(results,video);
-                    File destDirectory = new File(tempPath + video.getAnimeTitle());
+//                    File destDirectory = new File(tempPath + video.getAnimeTitle());
                     try{
-                        destDirectory.mkdirs();
-                        File sourceFile = new File(video.getFilePath());
-                        File destFile = new File(destDirectory, video.getFileName());
-                        Files.move(sourceFile.toPath(), destFile.toPath());
-                        video.setFilePath(destFile.getPath());
-                        System.out.println(video.getFileName()+"迁移成功");
+//                        destDirectory.mkdirs();
+//                        File sourceFile = new File(video.getFilePath());
+//                        File destFile = new File(destDirectory, video.getFileName());
+//                        Files.move(sourceFile.toPath(), destFile.toPath());
+//                        video.setFilePath(destFile.getPath());
+//                        System.out.println(video.getFileName()+"迁移成功");
                         video.setMatched("2");
-                        videoService.addVideo(video);
+                        videoMapper.updateVideo(video);
                     }catch (Exception e){
                         log.error("迁移失败："+e.getLocalizedMessage());
                     }
 
                 }else {
                     log.info(video.getFileName()+"未能成功匹配");
-                    File destDirectory = new File(failedPath + video.getAnimeTitle());
+//                    File destDirectory = new File(failedPath + video.getAnimeTitle());
                     try{
-                        destDirectory.mkdirs();
-                        File sourceFile = new File(video.getFilePath());
-                        File destFile = new File(destDirectory, video.getFileName());
-                        Files.move(sourceFile.toPath(), destFile.toPath());
-                        video.setFilePath(destFile.getPath());
-                        System.out.println(video.getFileName()+"迁移成功");
-                        video.setMatched("0");
-                        videoService.addVideo(video);
+//                        destDirectory.mkdirs();
+//                        File sourceFile = new File(video.getFilePath());
+//                        File destFile = new File(destDirectory, video.getFileName());
+//                        Files.move(sourceFile.toPath(), destFile.toPath());
+//                        video.setFilePath(destFile.getPath());
+//                        System.out.println(video.getFileName()+"迁移成功");
+                        video.setMatched("3");
+                        videoMapper.updateVideo(video);
                     }catch (Exception e){
                         log.error("迁移失败："+e.getLocalizedMessage());
                     }

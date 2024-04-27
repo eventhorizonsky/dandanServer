@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="xyz.ezsky.dao.SubtitleMapper">
+    <resultMap id="subtitleResultMap" type="xyz.ezsky.entity.vo.Subtitle">
+        <id property="id" column="id"/>
+        <result property="path" column="path"/>
+        <result property="subtitleName" column="subtitle_name"/>
+        <result property="isDefault" column="is_default"/>
+        <result property="videoId" column="video_id"/>
+    </resultMap>
+    <insert id="insertSubtitle">
+        INSERT INTO subtitles (path, subtitle_name, is_default, video_id)
+        VALUES (#{path},#{subtitleName},#{isDefault},#{videoId})
+    </insert>
+
+    <select id="selectSubtitleById" resultMap="subtitleResultMap">
+        SELECT * FROM subtitles WHERE id = #{id}
+    </select>
+
+    <select id="selectSubtitleByVideoId" resultMap="subtitleResultMap">
+        SELECT * FROM subtitles WHERE video_id = #{videoId}
+    </select>
+
+    <select id="selectAllSubtitle" resultMap="subtitleResultMap">
+        SELECT * FROM subtitles;
+    </select>
+
+    <delete id="deleteSubtitleById">
+        DELETE FROM subtitles WHERE id = #{id}
+    </delete>
+
+    <select id="selectSubtitleNotMatch" resultMap="subtitleResultMap">
+        SELECT * FROM subtitles WHERE video_id = 0
+    </select>
+
+    <update id="updateSubtitle" parameterType="xyz.ezsky.entity.vo.Subtitle">
+        UPDATE subtitles
+        <set>
+            <if test="path != null">path = #{path},</if>
+            <if test="subtitleName != null">subtitle_name = #{subtitleName},</if>
+            <if test="isDefault != null and isDefault != 0">is_default = #{isDefault},</if>
+            <if test="videoId != null and videoId != 0">video_id = #{videoId},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectSubtitleByPath" resultMap="subtitleResultMap">
+        SELECT * FROM subtitles WHERE path = #{path}
+    </select>
+</mapper>

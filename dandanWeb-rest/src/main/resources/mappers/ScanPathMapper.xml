@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="xyz.ezsky.dao.ScanPathMapper">
+
+    <insert id="insertScanPath">
+        INSERT INTO scan_path(path) VALUES (#{scanPath})
+    </insert>
+
+    <select id="selectScanPathById" resultType="java.lang.String">
+        SELECT path FROM scan_path WHERE id = #{id}
+    </select>
+    <select id="selectScanPathBypath" resultType="java.lang.String">
+        SELECT path FROM scan_path WHERE path = #{scanPath}
+    </select>
+    <select id="selectAllScanPath" resultType="java.lang.String">
+        SELECT path FROM scan_path;
+    </select>
+
+    <delete id="deleteScanPathById">
+        DELETE FROM scan_path WHERE id = #{id}
+    </delete>
+</mapper>
