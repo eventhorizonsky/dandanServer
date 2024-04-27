@@ -7,10 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import ws.schild.jave.process.ProcessWrapper;
@@ -23,6 +21,7 @@ import xyz.ezsky.service.VideoService;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -69,23 +68,43 @@ public class VideoController {
      * 读取视频文件
      */
     @GetMapping("/{id}/stream")
-    public ResponseEntity<FileSystemResource> displayMp4(@PathVariable Integer id, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public ResponseEntity displayMp4(@PathVariable Integer id,@RequestHeader(value = "Range", required = false) String rangeHeader, HttpServletRequest request, HttpServletResponse response) throws IOException {
         VideoVo videoVo = videoService.getVideoById(id);
         File videoFile = new File(videoVo.getFilePath());
-        if (videoFile.exists()) {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            headers.setContentLength(videoFile.length());
-            headers.setContentDispositionFormData("attachment", videoVo.getFileName());
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(new FileSystemResource(videoFile));
-        } else {
+
+        if (!videoFile.exists()) {
             return ResponseEntity.notFound().build();
         }
 
-    }
+        long fileSize = videoFile.length();
 
+        InputStream inputStream;
+        long start = 0;
+        long end = fileSize - 1;
+
+        if (rangeHeader != null && rangeHeader.startsWith("bytes=")) {
+            String[] range = rangeHeader.substring(6).split("-");
+            start = Long.parseLong(range[0]);
+            end = range.length > 1 ? Long.parseLong(range[1]) : fileSize - 1;
+        }
+
+        inputStream = new FileInputStream(videoFile);
+        inputStream.skip(start);
+
+        long contentLength = end - start + 1;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaTypeFactory.getMediaType(videoFile.getName()).orElse(MediaType.APPLICATION_OCTET_STREAM));
+        headers.setContentLength(contentLength);
+        headers.set("Content-Range", "bytes " + start + "-" + end + "/" + fileSize);
+
+        InputStreamResource resource = new InputStreamResource(inputStream);
+
+        return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
+                .headers(headers)
+                .body(resource);
+
+    }
     /**
      * 读取视频文件
      */
