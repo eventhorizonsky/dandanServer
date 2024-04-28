@@ -1,6 +1,7 @@
 package xyz.ezsky.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -31,6 +32,7 @@ import java.util.List;
  */
 @Configuration
 @Slf4j
+@MapperScan("xyz.ezsky.dao")
 public class AppConfig {
 
 
@@ -54,9 +56,12 @@ public class AppConfig {
     @Autowired
     private AppConfigDTO appConfigDTO;
 
-    @Autowired
-    private ResourceLoader resourceLoader;
 
+    private final ResourceLoader resourceLoader;
+
+    public AppConfig(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
+    }
     /**
      * 数据源
      *
