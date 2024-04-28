@@ -13,6 +13,7 @@ import xyz.ezsky.entity.vo.Subtitle;
 import xyz.ezsky.entity.vo.VideoVo;
 import xyz.ezsky.service.ConfigService;
 import xyz.ezsky.tasks.FileMonitor;
+import xyz.ezsky.tasks.VideoScanner;
 import xyz.ezsky.utils.FileTool;
 
 import java.util.ArrayList;
@@ -34,10 +35,13 @@ public class ConfigServiceImpl implements ConfigService {
     @Autowired
     private SubtitleMapper subtitleMapper;
 
+    @Autowired
+    private VideoScanner videoScanner;
     @Override
     public boolean isAddPath(String path) {
         if (scanPathMapper.selectScanPathBypath(path).isEmpty()) {
             scanPathMapper.insertScanPath(path);
+            videoScanner.startScanVideos("30 * * * * ?");
             return true;
         } else {
             return false;
