@@ -1,5 +1,6 @@
 package xyz.ezsky.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -8,7 +9,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.sqlite.SQLiteDataSource;
 import xyz.ezsky.dao.ScanPathMapper;
-import xyz.ezsky.entity.AppConfig;
+import xyz.ezsky.entity.dto.AppConfigDTO;
 import xyz.ezsky.service.ConfigService;
 import xyz.ezsky.tasks.VideoScanner;
 
@@ -22,32 +23,45 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
+/**
+ * 应用配置
+ *
+ * @author eventhorizonsky
+ * @date 2024/04/28
+ */
 @Configuration
-public class DatabaseConfig {
+@Slf4j
+public class AppConfig {
 
-    private final ResourceLoader resourceLoader;
 
+    /**
+     * DB 文件路径
+     */
     @Value("${database.file.path}")
     private String dbFilePath;
 
+    /**
+     * 创建表 SQL 文件
+     */
     @Value("${database.create.table.sql.file}")
     private String createTableSqlFile;
-
     @Autowired
     private VideoScanner videoScanner;
-
     @Autowired
     private ConfigService configService;
-
     @Autowired
     private ScanPathMapper scanPathMapper;
     @Autowired
-    private AppConfig appConfig;
+    private AppConfigDTO appConfigDTO;
 
-    public DatabaseConfig(ResourceLoader resourceLoader) {
-        this.resourceLoader = resourceLoader;
-    }
+    @Autowired
+    private ResourceLoader resourceLoader;
 
+    /**
+     * 数据源
+     *
+     * @return {@link SQLiteDataSource}
+     */
     @Bean
     public SQLiteDataSource dataSource() {
         SQLiteDataSource dataSource = new SQLiteDataSource();
@@ -55,6 +69,9 @@ public class DatabaseConfig {
         return dataSource;
     }
 
+    /**
+     * 初始化
+     */
     @PostConstruct
     private void init() {
         // 检查数据库文件是否存在
@@ -73,8 +90,8 @@ public class DatabaseConfig {
             // 读取 SQL 文件中的建表语句
             String createTableQuery = loadSqlFromFile(createTableSqlFile);
             statement.executeUpdate(createTableQuery);
-            appConfig.setFirstTime(true);
-            videoScanner.startScanVideos("44 * * * * ?");
+            appConfigDTO.setFirstTime(true);
+            videoScanner.startScanVideos("30 * * * * ?");
         } catch (SQLException | IOException e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to create table.", e);
@@ -82,6 +99,13 @@ public class DatabaseConfig {
     }
 
 
+    /**
+     * 从文件加载 SQL
+     *
+     * @param sqlFilePath SQL 文件路径
+     * @return {@link String}
+     * @throws IOException io异常
+     */
     private String loadSqlFromFile(String sqlFilePath) throws IOException {
         Resource resource = resourceLoader.getResource("classpath:" + sqlFilePath);
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {

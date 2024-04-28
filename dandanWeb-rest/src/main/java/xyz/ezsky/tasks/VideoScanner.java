@@ -8,12 +8,11 @@ import okhttp3.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
 import xyz.ezsky.dao.SubtitleMapper;
 import xyz.ezsky.dao.VideoMapper;
-import xyz.ezsky.entity.AppConfig;
+import xyz.ezsky.entity.dto.AppConfigDTO;
 import xyz.ezsky.entity.vo.Subtitle;
 import xyz.ezsky.entity.vo.VideoVo;
 import xyz.ezsky.service.VideoService;
@@ -21,12 +20,16 @@ import xyz.ezsky.utils.FileTool;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 
+/**
+ * 视频扫描仪
+ *
+ * @author eventhorizonsky
+ * @date 2024/04/28
+ */
 @Component
 @Slf4j
 public class VideoScanner {
@@ -37,7 +40,7 @@ public class VideoScanner {
     private String matchApi;
 
     @Autowired
-    private AppConfig appConfig;
+    private AppConfigDTO appConfigDTO;
 
     @Autowired
     private TaskScheduler taskScheduler;
@@ -48,6 +51,11 @@ public class VideoScanner {
 
     private ScheduledFuture<?> scheduledFuture;
 
+    /**
+     * 开始扫描视频
+     *
+     * @param cronExpression cron 表达式
+     */
     public void startScanVideos(String cronExpression) {
         if (scheduledFuture != null && !scheduledFuture.isDone()) {
             scheduledFuture.cancel(true);
@@ -56,15 +64,26 @@ public class VideoScanner {
         scheduledFuture = taskScheduler.schedule(this::scan, new CronTrigger(cronExpression));
     }
 
+    /**
+     * 停止扫描视频
+     */
     public void stopScanVideos() {
         if (scheduledFuture != null) {
             scheduledFuture.cancel(true);
         }
     }
+
+    /**
+     * 扫描
+     */
     public void scan(){
         scanVideos();
         scanSrt();
     }
+
+    /**
+     * 匹配字幕
+     */
     public void scanSrt(){
         List<Subtitle> subtitles=subtitleMapper.selectSubtitleNotMatch();
         if (subtitles.isEmpty()) {
@@ -72,10 +91,16 @@ public class VideoScanner {
         }
         for(Subtitle subtitle:subtitles){
             List<VideoVo> videoVos= videoMapper.selectVideoBySubtitle(subtitle.getPath().substring(0, subtitle.getPath().lastIndexOf(".")));
-            subtitle.setVideoId(videoVos.get(0).getId());
-            subtitleMapper.updateSubtitle(subtitle);
+            if(videoVos!=null&&!videoVos.isEmpty()){
+                subtitle.setVideoId(videoVos.get(0).getId());
+                subtitleMapper.updateSubtitle(subtitle);
+            }
         }
     }
+
+    /**
+     * 扫描视频
+     */
     public void scanVideos() {
         List<VideoVo> videoVoList=videoMapper.selectAllVideosNotMatch();
         if (videoVoList.isEmpty()) {
@@ -85,11 +110,24 @@ public class VideoScanner {
            autoScanVideo(video);
         }
     }
+
+    /**
+     * 自动扫描视频
+     *
+     * @param video 视频
+     */
     public void autoScanVideo(VideoVo video){
         File targetFile=new File(video.getFilePath());
         if(isDownloading(targetFile)){
             log.info(targetFile.getName()+"正在下载中，跳过");
             return;
+        }
+        List<Subtitle> subtitles=FileTool.scanMkv(video);
+        if(!subtitles.isEmpty()){
+            for(Subtitle subtitle:subtitles){
+                subtitle.setVideoId(video.getId());
+                subtitleMapper.insertSubtitle(subtitle);
+            }
         }
         OkHttpClient client = new OkHttpClient();
         String url = matchApi;
@@ -178,6 +216,13 @@ public class VideoScanner {
             log.error(e.getLocalizedMessage());
         }
     }
+
+    /**
+     * 设置视频信息
+     *
+     * @param results 结果
+     * @param video   视频
+     */
     private void setVideoInfo(JSONArray results,VideoVo video){
         JSONObject matchResult = results.getJSONObject(0);
         int episodeId = matchResult.getIntValue("episodeId");
@@ -195,6 +240,13 @@ public class VideoScanner {
         video.setTypeDescription(typeDescription);
         video.setShift(shift);
     }
+
+    /**
+     * 扫描目录
+     *
+     * @param directoryPath 目录路径
+     * @return {@link List}<{@link VideoVo}>
+     */
     private List<VideoVo> scanDirectory(String directoryPath) {
         File directory = new File(directoryPath);
         if (!directory.exists() || !directory.isDirectory()) {

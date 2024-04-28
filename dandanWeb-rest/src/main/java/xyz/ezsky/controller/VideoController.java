@@ -130,7 +130,11 @@ public class VideoController {
         List<Subtitle> dbSubtitles=subtitleMapper.selectSubtitleByVideoId(id);
         for(Subtitle dbsubtitle:dbSubtitles){
             dbsubtitle.setUrl("/api/videos/Subtitle/"+dbsubtitle.getId());
+            if(dbSubtitles.size()==1){
+                dbsubtitle.setDefault(true);
+            }
             subtitles.add(dbsubtitle);
+
         }
         playerVo.setSubtitles(subtitles);
         return playerVo;

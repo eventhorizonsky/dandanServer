@@ -16,43 +16,56 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-//FileListener类
+/**
+ * 文件侦听器
+ *
+ * @author eventhorizonsky
+ * @date 2024/04/28
+ *///FileListener类
 @Slf4j
 public class FileListener extends FileAlterationListenerAdaptor {
 
 
+    /**
+     * 视频映射器
+     */
     private final VideoMapper videoMapper;
 
+    /**
+     * 字幕映射器
+     */
     private final SubtitleMapper subtitleMapper;
 
+    /**
+     * 文件侦听器
+     *
+     * @param videoMapper    视频映射器
+     * @param subtitleMapper 字幕映射器
+     */
     @Autowired
     public FileListener(VideoMapper videoMapper,SubtitleMapper subtitleMapper) {
         this.subtitleMapper=subtitleMapper;
         this.videoMapper = videoMapper;
     }
+
+    /**
+     * 监听到文件删除
+     *
+     * @param file 文件
+     */
     public void onFileDelete(File file) {
         log.info("[删除]:" + file.getAbsolutePath());
         videoMapper.deleteVideoByFilePath(file.getAbsolutePath());
     }
+
+    /**
+     * 监听到文件创建
+     *
+     * @param file 文件
+     */
     public void onFileCreate(File file) {
         if (file.isFile() && FileTool.isVideoFile(file.getName())) {
             VideoVo videoVo=FileTool.extractVideoInfo(file.getAbsolutePath());
-            List<Subtitle> subtitles=new ArrayList<>();
-            if(!Objects.isNull(videoVo)){
-              subtitles.addAll(FileTool.scanMkv(videoVo));
-                List<String> dbFiles = subtitleMapper.selectAllSubtitle().stream()
-                        .map(Subtitle::getPath) // 提取每个 VideoVo 对象的 filePath 字段
-                        .collect(Collectors.toList());
-                if(!subtitles.isEmpty()){
-                    for(Subtitle subtitle:subtitles){
-                        if (!dbFiles.contains(subtitle.getPath())) {
-                            subtitleMapper.insertSubtitle(subtitle);
-                        }else{
-                            log.info(subtitle.getPath()+"已存在于数据库");
-                        }
-                    }
-                }
-            }
             if (videoVo != null) {
                 List<VideoVo> videoVos=videoMapper.selectVideoByFilePath(videoVo.getFilePath());
                 if(videoVos.isEmpty()){
@@ -80,10 +93,20 @@ public class FileListener extends FileAlterationListenerAdaptor {
     }
 
 
+    /**
+     * 启动时
+     *
+     * @param observer 观察者
+     */
     public void onStart(FileAlterationObserver observer) {
         super.onStart(observer);
     }
 
+    /**
+     * 停止时
+     *
+     * @param observer 观察者
+     */
     public void onStop(FileAlterationObserver observer) {
         super.onStop(observer);
     }

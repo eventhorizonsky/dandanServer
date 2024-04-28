@@ -1,11 +1,12 @@
 package xyz.ezsky.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import xyz.ezsky.entity.dto.AppConfigDTO;
 import xyz.ezsky.entity.vo.VideoVo;
 import xyz.ezsky.service.ConfigService;
 
@@ -20,7 +21,11 @@ public class ConfigController {
     private ConfigService configService;
 
     @PostMapping("/addPath")
-    public List<VideoVo> addPath(@Param("path") String path) {
-        return configService.addPath(path);
+    public boolean addPath(@RequestBody AppConfigDTO appConfigDTO) {
+        boolean needAdd=configService.isAddPath(appConfigDTO.getTargetPath());
+        if(needAdd){
+            configService.addPathScan(appConfigDTO.getTargetPath());
+        }
+        return needAdd;
     }
 }

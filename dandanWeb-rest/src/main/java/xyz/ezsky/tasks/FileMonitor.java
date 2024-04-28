@@ -33,27 +33,44 @@ public class FileMonitor {
         this.observers = new ArrayList<>();
     }
 
-    public void addMonitoredFolderFirstTime(String folderPath, List<VideoVo> videoVoList,List<Subtitle> subtitles) {
+
+    /**
+     * 首次添加受监控文件夹
+     *
+     * @param folderPath  文件夹路径
+     * @param videoVoList 视频列表
+     * @param subtitles   字幕
+     */
+    public void addMonitoredFolderFirstTime(String folderPath, List<VideoVo> videoVoList, List<Subtitle> subtitles) {
         File folder = new File(folderPath);
         if (!folder.exists() || !folder.isDirectory()) {
             log.error("Folder '{}' does not exist or is not a directory", folderPath);
             return;
         }
-
         // 创建递归观察者，监控指定文件夹及其所有子文件夹
         FileAlterationObserver observer = new FileAlterationObserver(folder);
-        observer.addListener(new FileListener(videoMapper,subtitleMapper));
+        observer.addListener(new FileListener(videoMapper, subtitleMapper));
         observers.add(observer);
-        videoVoList.addAll(Objects.requireNonNull(scanDirectory(folderPath,subtitles)));
+        List<VideoVo> videoVos = scanDirectory(folderPath, subtitles);
+        if (videoVos != null && !videoVos.isEmpty()) {
+            videoVoList.addAll(videoVos);
+        }
         File[] subFolders = folder.listFiles(File::isDirectory);
         if (subFolders != null) {
             for (File subFolder : subFolders) {
-                addMonitoredFolderFirstTime(subFolder.getPath(), videoVoList,subtitles); // 递归添加子文件夹
+                addMonitoredFolderFirstTime(subFolder.getPath(), videoVoList, subtitles); // 递归添加子文件夹
             }
         }
     }
 
-    private List<VideoVo> scanDirectory(String directoryPath,List<Subtitle> subtitles) {
+    /**
+     * 扫描目录
+     *
+     * @param directoryPath 目录路径
+     * @param subtitles     字幕
+     * @return {@link List}<{@link VideoVo}>
+     */
+    private List<VideoVo> scanDirectory(String directoryPath, List<Subtitle> subtitles) {
         File directory = new File(directoryPath);
         if (!directory.exists() || !directory.isDirectory()) {
             log.info("目录不存在或不是一个有效的目录：" + directoryPath);
@@ -68,35 +85,26 @@ public class FileMonitor {
         List<VideoVo> videoVoList = new ArrayList<>();
         for (File file : files) {
             if (file.isFile() && FileTool.isVideoFile(file.getName())) {
-                VideoVo videoVo=FileTool.extractVideoInfo(file.getAbsolutePath());
-                if(!Objects.isNull(videoVo)){
+                VideoVo videoVo = FileTool.extractVideoInfo(file.getAbsolutePath());
+                if (!Objects.isNull(videoVo)) {
                     videoVoList.add(videoVo);
                 }
-            }else if (file.isFile()&&FileTool.isSubtitile(file.getName())) {
-                Subtitle subtitle=new Subtitle();
+            } else if (file.isFile() && FileTool.isSubtitile(file.getName())) {
+                Subtitle subtitle = new Subtitle();
                 subtitle.setPath(file.getAbsolutePath());
-                List<VideoVo> videoVos= videoMapper.selectVideoBySubtitle(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(".")));
-                if(!videoVos.isEmpty()){
-                    subtitle.setVideoId(videoVos.get(0).getId());
-                }
-                List<String> dbSbFiles = subtitleMapper.selectAllSubtitle().stream()
-                        .map(Subtitle::getPath) // 提取每个 VideoVo 对象的 filePath 字段
-                        .collect(Collectors.toList());
-                        if (!dbSbFiles.contains(subtitle.getPath())) {
-                            subtitle.setSubtitleName("外挂字幕");
-                            subtitleMapper.insertSubtitle(subtitle);
-                        } else {
-                            log.info(subtitle.getPath() + "已存在于数据库");
-                        }
+                subtitle.setSubtitleName("外挂字幕");
+                subtitles.add(subtitle);
             }
         }
         return videoVoList;
     }
 
 
-
-
-
+    /**
+     * 删除受监视文件夹
+     *
+     * @param folderPath 文件夹路径
+     */
     public void removeMonitoredFolder(String folderPath) {
         File folder = new File(folderPath);
         FileAlterationObserver observerToRemove = null;
@@ -113,6 +121,12 @@ public class FileMonitor {
         }
     }
 
+
+    /**
+     * 获取受监视文件夹
+     *
+     * @return {@link List}<{@link String}>
+     */
     public List<String> getMonitoredFolders() {
         List<String> folderPaths = new ArrayList<>();
         for (FileAlterationObserver observer : observers) {
@@ -121,6 +135,9 @@ public class FileMonitor {
         return folderPaths;
     }
 
+    /**
+     * 开始监控
+     */
     public void startMonitoring() {
 //        FileAlterationMonitor monitor = new FileAlterationMonitor(SCAN_INTERVAL_MILLIS);
         FileAlterationMonitor monitor = new FileAlterationMonitor();

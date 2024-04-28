@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
-import xyz.ezsky.entity.AppConfig;
+import xyz.ezsky.entity.dto.AppConfigDTO;
 import xyz.ezsky.tasks.VideoScanner;
 
 // TODO: 2024/4/27 备用 初始化的时候写 
@@ -15,7 +15,7 @@ import xyz.ezsky.tasks.VideoScanner;
 public class CustomInterceptor implements HandlerInterceptor {
 
     @Autowired
-    private AppConfig appConfig;
+    private AppConfigDTO appConfigDTO;
     @Autowired
     private VideoScanner videoScanner;
 

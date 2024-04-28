@@ -18,8 +18,6 @@ public class VideoServiceImpl implements VideoService {
 
     @Resource
     private VideoMapper videoMapper;
-    @Value("${danDanWeb.targetPath}")
-    private String targetPath;
 
     @Override
     public void addVideo(VideoVo videoVo) {
@@ -37,28 +35,8 @@ public class VideoServiceImpl implements VideoService {
 
     @Override
     public void updateVideo(VideoVo video) {
-        videoMapper.updateVideo(video);
-        VideoVo videoVo=videoMapper.selectVideoById(video.getId());
-        File destDirectory = new File(targetPath + videoVo.getAnimeTitle());
-        try{
-            destDirectory.mkdirs();
-            File sourceFile = new File(videoVo.getFilePath());
-            String baseName= videoVo.getEpisodeTitle().replaceAll("/", Integer.toString("/".hashCode()));
-            File destFile = new File(destDirectory, baseName+"."+videoVo.getFileExtension());
-            int count = 1;
-            while (destFile.exists()) {
-                log.info(destFile.getName()+"已存在，进行重命名");
-                String newName = baseName + "(" + count + ")." + videoVo.getFileExtension();
-                destFile = new File(destDirectory, newName);
-                count++;
-            }
-            Files.move(sourceFile.toPath(), destFile.toPath());
-            videoVo.setFilePath(destFile.getPath());
-            log.info(videoVo.getFileName()+"迁移成功");
-            videoMapper.updateVideo(videoVo);
-        }catch (Exception e){
-            log.error("迁移失败："+e.getLocalizedMessage());
-        }
+
+          videoMapper.updateVideo(video);
     }
 
     @Override

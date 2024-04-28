@@ -7,12 +7,6 @@ spring:
     url: jdbc:sqlite:mydatabase.db
 server: #程序访问端口号
   port: 8081
-danDanWeb:
-  scanPath: app/media/source
-  targetPath: app/media/target/
-  tempPath: app/media/temp/
-  failedPath: app/media/source/failed/
-  cron: 30 * * * * ?
 danDanApi:
   match: https://api.dandanplay.net/api/v2/match
 database:

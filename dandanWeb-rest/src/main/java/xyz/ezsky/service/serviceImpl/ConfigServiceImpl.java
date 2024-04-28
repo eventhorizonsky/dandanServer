@@ -3,7 +3,9 @@ package xyz.ezsky.service.serviceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import xyz.ezsky.dao.ScanPathMapper;
 import xyz.ezsky.dao.SubtitleMapper;
 import xyz.ezsky.dao.VideoMapper;
@@ -17,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Component
+@Service
 @Slf4j
 public class ConfigServiceImpl implements ConfigService {
     @Autowired
@@ -33,18 +35,18 @@ public class ConfigServiceImpl implements ConfigService {
     private SubtitleMapper subtitleMapper;
 
     @Override
-    public List<VideoVo> addPath(String path) {
+    public boolean isAddPath(String path) {
         if (scanPathMapper.selectScanPathBypath(path).isEmpty()) {
             scanPathMapper.insertScanPath(path);
-            return addPathScan(path);
+            return true;
         } else {
-            return null;
+            return false;
         }
     }
 
     @Override
     @Async
-    public List<VideoVo> addPathScan(String path) {
+    public void addPathScan(String path) {
         List<VideoVo> folderFiles = new ArrayList<>();
         List<Subtitle> subtitles = new ArrayList<>();
         fileMonitor.addMonitoredFolderFirstTime(path, folderFiles, subtitles);
@@ -59,7 +61,6 @@ public class ConfigServiceImpl implements ConfigService {
             if (!dbFiles.contains(folderFile.getFilePath())) {
                 folderFile.setMatched("0");
                 videoMapper.insertVideo(folderFile);
-                subtitles.addAll(FileTool.scanMkv(folderFile));
             } else {
                 log.info(folderFile.getFilePath() + "已存在于数据库");
             }
@@ -76,6 +77,5 @@ public class ConfigServiceImpl implements ConfigService {
                 }
             }
         }
-        return folderFiles;
     }
 }

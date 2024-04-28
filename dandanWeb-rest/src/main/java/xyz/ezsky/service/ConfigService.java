@@ -6,6 +6,6 @@ import java.util.List;
 
 public interface ConfigService {
 
-    public List<VideoVo> addPath(String path);
-    public List<VideoVo> addPathScan(String path);
+    public boolean isAddPath(String path);
+    public void addPathScan(String path);
 }
