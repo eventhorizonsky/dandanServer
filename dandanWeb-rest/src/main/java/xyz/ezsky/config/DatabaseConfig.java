@@ -9,11 +9,13 @@ import org.sqlite.SQLiteDataSource;
 
 import javax.annotation.PostConstruct;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 @Configuration
 public class DatabaseConfig {
@@ -39,6 +41,11 @@ public class DatabaseConfig {
 
     @PostConstruct
     private void createTable() {
+        File dbFile = new File(dbFilePath);
+        if (dbFile.exists()) {
+            // 如果数据库文件已经存在，则不执行创建表的操作
+            return;
+        }
         try (Connection connection = dataSource().getConnection();
              Statement statement = connection.createStatement()) {
             // 读取 SQL 文件中的建表语句
