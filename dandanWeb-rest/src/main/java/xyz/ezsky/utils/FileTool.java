@@ -164,7 +164,7 @@ public class FileTool {
                 || fileName.toLowerCase().endsWith(".mov");
         // 添加其他视频格式的判断条件
     }
-    private static String calculateFileHash(String filePath) {
+    public static String calculateFileHash(String filePath) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
             FileInputStream fis = new FileInputStream(filePath);

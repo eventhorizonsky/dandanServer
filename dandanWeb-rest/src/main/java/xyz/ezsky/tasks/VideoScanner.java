@@ -129,6 +129,7 @@ public class VideoScanner {
                 subtitleMapper.insertSubtitle(subtitle);
             }
         }
+        video.setHashValue(FileTool.calculateFileHash(video.getFilePath()));
         OkHttpClient client = new OkHttpClient();
         String url = matchApi;
         JSONObject requestBody = new JSONObject();

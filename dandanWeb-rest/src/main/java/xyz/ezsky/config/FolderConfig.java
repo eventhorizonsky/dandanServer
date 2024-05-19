@@ -1,30 +1,50 @@
 package xyz.ezsky.config;
 
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.event.EventListener;
+import xyz.ezsky.dao.ScanPathMapper;
+import xyz.ezsky.service.ConfigService;
+import xyz.ezsky.tasks.VideoScanner;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
+import java.util.List;
 
+/**
+ * 应用配置
+ *
+ * @author eventhorizonsky
+ * @date 2024/04/28
+ */
 @Configuration
+@Slf4j
 public class FolderConfig {
-    @EventListener(ApplicationReadyEvent.class)
-    public void createDirectories() {
-        File tempDir = new File("app/media/temp");
-        if (!tempDir.exists()) {
-            tempDir.mkdirs();
-        }
-        File targetDir = new File("app/media/target");
-        if (!targetDir.exists()) {
-            targetDir.mkdirs();
-        }
-        File sourceDir = new File("app/media/source");
-        if (!sourceDir.exists()) {
-            sourceDir.mkdirs();
-        }
-        File failedDir = new File("app/media/source/failed");
-        if (!failedDir.exists()) {
-            failedDir.mkdirs();
+    @Value("${database.file.path}")
+    private String dbFilePath;
+    @Autowired
+    private VideoScanner videoScanner;
+    @Autowired
+    private ConfigService configService;
+    @Autowired
+    private ScanPathMapper scanPathMapper;
+
+    /**
+     * 初始化
+     */
+    @PostConstruct
+    private void init() {
+        // 检查数据库文件是否存在
+        File dbFile = new File(dbFilePath);
+        if (dbFile.exists()) {
+            List<String> paths=scanPathMapper.selectAllScanPath();
+            for(String path:paths){
+                configService.addPathScan(path);
+            }
+            videoScanner.startScanVideos("44 * * * * ?");
         }
     }
 }
+
+
