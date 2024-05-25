@@ -30,6 +30,5 @@ CREATE TABLE subtitles (
   path TEXT,
   video_id INTEGER,
   subtitle_name TEXT,
-  type,TEXT,
   is_default integer
 );
