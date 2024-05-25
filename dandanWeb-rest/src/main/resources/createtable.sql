@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS video_metadata(
     type TEXT,
     type_description TEXT,
     shift INTEGER,
+    join_time DATE,
+    is_air TEXT,
     matched TEXT
 );
 CREATE TABLE config (
@@ -28,5 +30,6 @@ CREATE TABLE subtitles (
   path TEXT,
   video_id INTEGER,
   subtitle_name TEXT,
+  type,TEXT,
   is_default integer
 );

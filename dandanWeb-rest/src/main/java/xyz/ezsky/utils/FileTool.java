@@ -3,6 +3,8 @@ package xyz.ezsky.utils;
 import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -26,16 +28,19 @@ public class FileTool {
             long fileSize = file.length();
             String hashValue = calculateFileHash(filePath);
             String fileExtension = "mp4";
-
+            LocalDateTime currentTime = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String currentTimeStr = currentTime.format(formatter);
             int lastIndexOfDot = fileName.lastIndexOf('.');
             if (lastIndexOfDot > 0) { // 确保文件名中包含了后缀
                 fileExtension = fileName.substring(lastIndexOfDot + 1);
             }
-            return new VideoVo(filePath,fileName, fileSize, hashValue,fileExtension);
+            return new VideoVo(filePath,fileName, fileSize, hashValue,fileExtension,currentTimeStr);
         } else {
             return null; // 文件不存在或不是普通文件，返回null表示获取失败
         }
     }
+
     public static List<Subtitle> scanMkv(VideoVo videoVo){
         File videoFile = new File(videoVo.getFilePath());
         List<Subtitle> subtitles = new ArrayList<>();
@@ -85,7 +90,7 @@ public class FileTool {
         }
     }
     private static void doNothing(String line) {
-        System.out.println(line);
+
     }
     private static void getSrt(List<Subtitle> subtitles,File videoFile){
         for(int i=0;i<subtitles.size();i++){
@@ -157,6 +162,16 @@ public class FileTool {
         return fileName.toLowerCase().endsWith(".ass")
                 || fileName.toLowerCase().endsWith(".srt");
         // 添加其他字幕格式的判断条件
+    }
+    public static boolean isSrtFile(String filePath) {
+        File file = new File(filePath);
+        if (file.exists() && file.isFile()) {
+            String fileName = file.getName();
+            String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
+            return extension.equalsIgnoreCase("srt");
+        } else {
+            return false;
+        }
     }
     public static boolean isVideoFile(String fileName) {
         return fileName.toLowerCase().endsWith(".mp4")

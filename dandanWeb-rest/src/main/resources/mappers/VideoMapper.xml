@@ -19,11 +19,13 @@
         <result property="typeDescription" column="type_description"/>
         <result property="shift" column="shift"/>
         <result property="Matched" column="matched"/>
+        <result property="joinTime" column="join_time"/>
+        <result property="isAir" column="is_air"/>
     </resultMap>
 
     <insert id="insertVideo"  parameterType="xyz.ezsky.entity.vo.VideoVo">
-        INSERT INTO video_metadata (file_path, file_name, file_size, hash_value, file_extension, episode_id, anime_id, anime_title, episode_title, type, type_description, shift,matched)
-        VALUES (#{filePath}, #{fileName}, #{fileSize}, #{hashValue}, #{fileExtension}, #{episodeId}, #{animeId}, #{animeTitle}, #{episodeTitle}, #{type}, #{typeDescription}, #{shift},#{Matched})
+        INSERT INTO video_metadata (file_path, file_name, file_size, hash_value, file_extension, episode_id, anime_id, anime_title, episode_title, type, type_description, shift,matched,join_time,is_air)
+        VALUES (#{filePath}, #{fileName}, #{fileSize}, #{hashValue}, #{fileExtension}, #{episodeId}, #{animeId}, #{animeTitle}, #{episodeTitle}, #{type}, #{typeDescription}, #{shift},#{Matched},#{joinTime},#{isAir})
     </insert>
     <!-- 根据id查询单个视频信息 -->
     <select id="selectVideoById" parameterType="Integer"  resultMap="videoResultMap">
@@ -54,7 +56,9 @@
             <if test="type != null">type = #{type},</if>
             <if test="typeDescription != null">type_description = #{typeDescription},</if>
             <if test="shift != null">shift = #{shift},</if>
-            <if test="Matched != null">matched = #{matched}</if>
+            <if test="Matched != null">matched = #{matched},</if>
+            <if test="joinTime != null">join_time = #{joinTime},</if>
+            <if test="isAir != null">is_air = #{isAir}</if>
         </set>
         WHERE id = #{id}
     </update>

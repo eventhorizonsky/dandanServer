@@ -35,16 +35,21 @@ public class VideoVo {
     private int shift;
     //是否匹配成功，0为未匹配，1为成功匹配，2为临时匹配
     private String Matched;
+    //添加时间
+    private String joinTime;
+    //是否连载中
+    private String isAir;
 
     public VideoVo() {
     }
 
-    public VideoVo(String filePath, String fileName, long fileSize, String hashValue, String fileExtension) {
+    public VideoVo(String filePath, String fileName, long fileSize, String hashValue, String fileExtension,String joinTime) {
         this.filePath = filePath;
         this.fileName = fileName;
         this.fileSize = fileSize;
         this.hashValue = hashValue;
         this.fileExtension=fileExtension;
+        this.joinTime=joinTime;
     }
 
 }

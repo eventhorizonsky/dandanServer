@@ -128,13 +128,21 @@ public class VideoController {
         File videoFile = new File(videoVo.getFilePath());
         List<Subtitle> subtitles = new ArrayList<>();
         List<Subtitle> dbSubtitles=subtitleMapper.selectSubtitleByVideoId(id);
+        boolean hasDefault = false;
         for(Subtitle dbsubtitle:dbSubtitles){
-            dbsubtitle.setUrl("/api/videos/Subtitle/"+dbsubtitle.getId());
-            if(dbSubtitles.size()==1){
-                dbsubtitle.setDefault(true);
+            dbsubtitle.isDefault();
+        }
+        for(Subtitle dbsubtitle:dbSubtitles){
+            // 检查是否有 isDefault() 为 true 的 Subtitle
+            if (dbsubtitle.isDefault()) {
+                hasDefault = true;
             }
-            subtitles.add(dbsubtitle);
+            dbsubtitle.setUrl("/api/videos/Subtitle/"+dbsubtitle.getId());
 
+            subtitles.add(dbsubtitle);
+        }
+        if(!hasDefault){
+            dbSubtitles.get(0).setDefault(true);
         }
         playerVo.setSubtitles(subtitles);
         return playerVo;
