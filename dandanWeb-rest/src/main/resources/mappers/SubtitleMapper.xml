@@ -7,10 +7,11 @@
         <result property="subtitleName" column="subtitle_name"/>
         <result property="isDefault" column="is_default"/>
         <result property="videoId" column="video_id"/>
+        <result property="timeOffset" column="time_offset"/>
     </resultMap>
     <insert id="insertSubtitle">
-        INSERT INTO subtitles (path, subtitle_name, is_default, video_id)
-        VALUES (#{path},#{subtitleName},#{isDefault},#{videoId})
+        INSERT INTO subtitles (path, subtitle_name, is_default, video_id,time_offset)
+        VALUES (#{path},#{subtitleName},#{isDefault},#{videoId},#{timeOffset})
     </insert>
 
     <select id="selectSubtitleById" resultMap="subtitleResultMap">
@@ -40,6 +41,7 @@
             <if test="subtitleName != null">subtitle_name = #{subtitleName},</if>
             <if test="isDefault != null and isDefault != 0">is_default = #{isDefault},</if>
             <if test="videoId != null and videoId != 0">video_id = #{videoId},</if>
+            <if test="timeOffset != null and timeOffset != 0">time_offset = #{timeOffset},</if>
         </set>
         WHERE id = #{id}
     </update>

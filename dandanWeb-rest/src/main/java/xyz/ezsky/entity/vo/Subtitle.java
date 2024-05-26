@@ -10,6 +10,15 @@ public class Subtitle {
     private boolean isDefault;
 
     private long videoId;
+    private long timeOffset;
+
+    public long getTimeOffset() {
+        return timeOffset;
+    }
+
+    public void setTimeOffset(long timeOffset) {
+        this.timeOffset = timeOffset;
+    }
 
     public long getId() {
         return id;
