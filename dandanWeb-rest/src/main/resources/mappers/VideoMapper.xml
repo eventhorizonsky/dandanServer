@@ -84,5 +84,9 @@
         WHERE #{filePath}
         LIKE substr(file_path, 1, LENGTH(file_path) - INSTR(REVERSE(file_path), '.')) || '%';
     </select>
+
+    <select id="getVideosFromAnime" resultMap="videoResultMap">
+        SELECT * FROM video_metadata WHERE anime_id = #{animeId}
+    </select>
 </mapper>
 

@@ -33,3 +33,12 @@ CREATE TABLE subtitles (
   is_default integer,
   time_offset integer DEFAULT 0
 );
+-- sqlite建表语句
+CREATE TABLE IF NOT EXISTS anime (
+    animeId INTEGER PRIMARY KEY,
+    animeTitle TEXT,
+    type TEXT,
+    typeDescription TEXT,
+    isAir INTEGER,
+    airDay INTEGER
+);

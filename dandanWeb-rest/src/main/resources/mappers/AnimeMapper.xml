@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="xyz.ezsky.dao.AnimeMapper">
+    <!-- 查询 -->
+    <select id="selectAnimeById" parameterType="int" resultType="xyz.ezsky.entity.dto.AnimeDTO">
+        SELECT * FROM anime WHERE animeId = #{animeId}
+    </select>
+
+    <!-- 插入 -->
+    <insert id="insertAnime" parameterType="xyz.ezsky.entity.dto.AnimeDTO">
+        INSERT INTO anime (animeId, animeTitle, type, typeDescription, isAir, airDay)
+        VALUES (#{animeId}, #{animeTitle}, #{type}, #{typeDescription}, #{isAir}, #{airDay})
+    </insert>
+    <select id="selectAnime" parameterType="xyz.ezsky.entity.AnimeVO" resultType="xyz.ezsky.entity.dto.AnimeDTO">
+        SELECT * FROM anime
+        <where>
+            <if test="isAir == true">
+                AND isAir = #{isAir}
+            </if>
+            <if test="animeTitle != null and animeTitle != ''">
+                AND animeTitle LIKE '%' || #{animeTitle} || '%'
+            </if>
+            <if test="type != null and type != ''">
+                AND type = #{type}
+            </if>
+        </where>
+    </select>
+
+    <!-- 删除 -->
+    <delete id="deleteAnimeById" parameterType="int">
+        DELETE FROM anime WHERE animeId = #{animeId}
+    </delete>
+    <!-- 更新，需要进行非空判断 -->
+    <update id="updateAnime" parameterType="xyz.ezsky.entity.dto.AnimeDTO">
+        UPDATE anime
+        <set>
+            <if test="animeTitle != null">animeTitle = #{animeTitle},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="typeDescription != null">typeDescription = #{typeDescription},</if>
+            <if test="isAir != null">isAir = #{isAir},</if>
+            <if test="airDay != null">airDay = #{airDay}</if>
+        </set>
+        WHERE animeId = #{animeId}
+    </update>
+    <!-- 更新所有动画的isAir为false -->
+    <update id="updateAllAnimeIsAirToFalse">
+        UPDATE anime SET isAir = false
+    </update>
+</mapper>

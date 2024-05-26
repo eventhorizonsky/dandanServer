@@ -53,7 +53,11 @@ public class VideoController {
         List<VideoVo> videos = videoService.getAllVideos();
         return new ResponseEntity<>(videos, HttpStatus.OK);
     }
-
+    @GetMapping("/anime")
+    public ResponseEntity<List<VideoVo>> getVideosFromAnime(@Param("animeId")String animeId) {
+        List<VideoVo> videos = videoService.getVideosFromAnime(animeId);
+        return new ResponseEntity<>(videos, HttpStatus.OK);
+    }
     @PutMapping("/{id}")
     public ResponseEntity<Void> updateVideo(@PathVariable Integer id, @RequestBody VideoVo video) {
         video.setId(id); // 设置要更新的记录的ID

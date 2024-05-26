@@ -28,5 +28,7 @@ public interface VideoMapper {
     List<VideoVo> selectVideoBySubtitle(String filePath);
 
     void deleteVideoByFilePath(String filePath);
+
+    List<VideoVo> getVideosFromAnime(String animeId);
 }
 

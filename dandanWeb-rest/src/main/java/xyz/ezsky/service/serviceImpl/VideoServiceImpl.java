@@ -49,4 +49,9 @@ public class VideoServiceImpl implements VideoService {
         return videoMapper.getNotMatchedVideoByName(fileName);
     }
 
+    @Override
+    public List<VideoVo> getVideosFromAnime(String animeId) {
+        return videoMapper.getVideosFromAnime(animeId);
+    }
+
 }
