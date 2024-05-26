@@ -5,7 +5,7 @@ spring:
     driver-class-name: org.sqlite.JDBC
     url: jdbc:sqlite:mydatabase.db
 server: #程序访问端口号
-  port: 8082
+  port: 8081
 danDanApi:
   match: https://api.dandanplay.net/api/v2/match
   anime: https://api.dandanplay.net/api/v2/bangumi
