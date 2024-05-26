@@ -145,7 +145,7 @@ public class VideoController {
 
             subtitles.add(dbsubtitle);
         }
-        if(!hasDefault){
+        if(!hasDefault&&!dbSubtitles.isEmpty()){
             dbSubtitles.get(0).setDefault(true);
         }
         playerVo.setSubtitles(subtitles);
