@@ -13,6 +13,8 @@ public interface VideoMapper {
 
     VideoVo selectVideoById(Integer id);
 
+    List<VideoVo> selectVideoByAnimeId(Integer animeId);
+
     List<VideoVo> selectAllVideos();
 
     List<VideoVo> selectAllVideosNotMatch();

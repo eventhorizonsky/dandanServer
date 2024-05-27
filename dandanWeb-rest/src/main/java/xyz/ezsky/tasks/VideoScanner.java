@@ -202,7 +202,7 @@ public class VideoScanner {
         }
     }
 
-    private void setAirInfo(AnimeDTO animeDTO) {
+    public void setAirInfo(AnimeDTO animeDTO) {
         OkHttpClient client = new OkHttpClient();
         String url = animeApi + "/" + animeDTO.getAnimeId();
         Request request = new Request.Builder()
