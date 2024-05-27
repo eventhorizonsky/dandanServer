@@ -6,6 +6,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import xyz.ezsky.dao.ScanPathMapper;
 import xyz.ezsky.dao.SubtitleMapper;
 import xyz.ezsky.dao.VideoMapper;
@@ -39,6 +40,8 @@ public class ConfigServiceImpl implements ConfigService {
     @Autowired
     private VideoScanner videoScanner;
 
+    private static final int BATCH_SIZE = 500;  // 每次批量插入的记录数
+
     @Override
     public boolean isAddPath(String path) {
         if (scanPathMapper.selectScanPathBypath(path).isEmpty()) {
@@ -51,6 +54,7 @@ public class ConfigServiceImpl implements ConfigService {
 
     @Override
     @Async
+    @Transactional
     public void addPathScan(String path) {
         videoScanner.stopScanVideos();
         List<VideoVo> folderFiles = new ArrayList<>();
@@ -77,8 +81,10 @@ public class ConfigServiceImpl implements ConfigService {
                 })
                 .collect(Collectors.toList());
 
-        if (!newVideos.isEmpty()) {
-            videoMapper.batchInsertVideos(newVideos);
+        // 分批次插入视频记录
+        for (int i = 0; i < newVideos.size(); i += BATCH_SIZE) {
+            int end = Math.min(newVideos.size(), i + BATCH_SIZE);
+            videoMapper.batchInsertVideos(newVideos.subList(i, end));
         }
 
         List<String> dbSbFiles = subtitleMapper.selectAllSubtitle().stream()
@@ -96,11 +102,14 @@ public class ConfigServiceImpl implements ConfigService {
                 })
                 .collect(Collectors.toList());
 
-        if (!newSubtitles.isEmpty()) {
-            subtitleMapper.batchInsertSubtitles(newSubtitles);
+        // 分批次插入字幕记录
+        for (int i = 0; i < newSubtitles.size(); i += BATCH_SIZE) {
+            int end = Math.min(newSubtitles.size(), i + BATCH_SIZE);
+            subtitleMapper.batchInsertSubtitles(newSubtitles.subList(i, end));
         }
 
         videoScanner.startScanVideos("30 * * * * ?");
     }
 }
+
 
