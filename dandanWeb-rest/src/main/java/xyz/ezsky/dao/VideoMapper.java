@@ -30,5 +30,7 @@ public interface VideoMapper {
     void deleteVideoByFilePath(String filePath);
 
     List<VideoVo> getVideosFromAnime(String animeId);
+
+    void batchInsertVideos(List<VideoVo> videos);
 }
 

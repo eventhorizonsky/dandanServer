@@ -49,4 +49,11 @@
     <select id="selectSubtitleByPath" resultMap="subtitleResultMap">
         SELECT * FROM subtitles WHERE path = #{path}
     </select>
+
+    <insert id="batchInsertSubtitles">
+        INSERT INTO subtitles (path, subtitle_name, is_default, video_id,time_offset) VALUES
+        <foreach collection="list" item="subtitle" separator=",">
+            (#{subtitle.path},#{subtitle.subtitleName},#{subtitle.isDefault},#{subtitle.videoId},#{subtitle.timeOffset})
+        </foreach>
+    </insert>
 </mapper>

@@ -23,5 +23,7 @@ public interface SubtitleMapper {
     void deleteSubtitleById(Integer id);
 
     List<Subtitle> selectSubtitleNotMatch();
+    //批量插入视频
+    void batchInsertSubtitles(List<Subtitle> subtitles);
 }
 

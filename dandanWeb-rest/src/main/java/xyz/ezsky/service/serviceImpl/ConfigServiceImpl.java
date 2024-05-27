@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@EnableAsync
 public class ConfigServiceImpl implements ConfigService {
     @Autowired
     private FileMonitor fileMonitor;
@@ -37,11 +38,11 @@ public class ConfigServiceImpl implements ConfigService {
 
     @Autowired
     private VideoScanner videoScanner;
+
     @Override
     public boolean isAddPath(String path) {
         if (scanPathMapper.selectScanPathBypath(path).isEmpty()) {
             scanPathMapper.insertScanPath(path);
-            videoScanner.startScanVideos("30 * * * * ?");
             return true;
         } else {
             return false;
@@ -51,6 +52,7 @@ public class ConfigServiceImpl implements ConfigService {
     @Override
     @Async
     public void addPathScan(String path) {
+        videoScanner.stopScanVideos();
         List<VideoVo> folderFiles = new ArrayList<>();
         List<Subtitle> subtitles = new ArrayList<>();
         fileMonitor.addMonitoredFolderFirstTime(path, folderFiles, subtitles);
@@ -58,28 +60,47 @@ public class ConfigServiceImpl implements ConfigService {
             System.out.println(s);
         }
         fileMonitor.startMonitoring();
+
         List<String> dbFiles = videoMapper.selectAllVideos().stream()
-                .map(VideoVo::getFilePath) // 提取每个 VideoVo 对象的 filePath 字段
+                .map(VideoVo::getFilePath)
                 .collect(Collectors.toList());
-        for (VideoVo folderFile : folderFiles) {
-            if (!dbFiles.contains(folderFile.getFilePath())) {
-                folderFile.setMatched("0");
-                videoMapper.insertVideo(folderFile);
-            } else {
-                log.info(folderFile.getFilePath() + "已存在于数据库");
-            }
+
+        List<VideoVo> newVideos = folderFiles.stream()
+                .filter(folderFile -> {
+                    if (dbFiles.contains(folderFile.getFilePath())) {
+                        log.info(folderFile.getFilePath() + "已存在于数据库");
+                        return false;
+                    } else {
+                        folderFile.setMatched("0");
+                        return true;
+                    }
+                })
+                .collect(Collectors.toList());
+
+        if (!newVideos.isEmpty()) {
+            videoMapper.batchInsertVideos(newVideos);
         }
+
         List<String> dbSbFiles = subtitleMapper.selectAllSubtitle().stream()
-                .map(Subtitle::getPath) // 提取每个 VideoVo 对象的 filePath 字段
+                .map(Subtitle::getPath)
                 .collect(Collectors.toList());
-        if (!subtitles.isEmpty()) {
-            for (Subtitle subtitle : subtitles) {
-                if (!dbSbFiles.contains(subtitle.getPath())) {
-                    subtitleMapper.insertSubtitle(subtitle);
-                } else {
-                    log.info(subtitle.getPath() + "已存在于数据库");
-                }
-            }
+
+        List<Subtitle> newSubtitles = subtitles.stream()
+                .filter(subtitle -> {
+                    if (dbSbFiles.contains(subtitle.getPath())) {
+                        log.info(subtitle.getPath() + "已存在于数据库");
+                        return false;
+                    } else {
+                        return true;
+                    }
+                })
+                .collect(Collectors.toList());
+
+        if (!newSubtitles.isEmpty()) {
+            subtitleMapper.batchInsertSubtitles(newSubtitles);
         }
+
+        videoScanner.startScanVideos("30 * * * * ?");
     }
 }
+

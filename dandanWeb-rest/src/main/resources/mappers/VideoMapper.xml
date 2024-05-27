@@ -88,5 +88,12 @@
     <select id="getVideosFromAnime" resultMap="videoResultMap">
         SELECT * FROM video_metadata WHERE anime_id = #{animeId}
     </select>
+
+    <insert id="batchInsertVideos">
+        INSERT INTO video_metadata (file_path, file_name, file_size, hash_value, file_extension, episode_id, anime_id, anime_title, episode_title, type, type_description, shift,matched,join_time,is_air) VALUES
+        <foreach collection="list" item="video" separator=",">
+            (#{video.filePath}, #{video.fileName}, #{video.fileSize}, #{video.hashValue}, #{video.fileExtension}, #{video.episodeId}, #{video.animeId}, #{video.animeTitle}, #{video.episodeTitle}, #{video.type}, #{video.typeDescription}, #{video.shift},#{video.Matched},#{video.joinTime},#{video.isAir})
+        </foreach>
+    </insert>
 </mapper>
 
