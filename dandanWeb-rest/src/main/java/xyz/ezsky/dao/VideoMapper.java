@@ -34,5 +34,7 @@ public interface VideoMapper {
     List<VideoVo> getVideosFromAnime(String animeId);
 
     void batchInsertVideos(List<VideoVo> videos);
+
+    List<VideoVo> recentUpdate();
 }
 

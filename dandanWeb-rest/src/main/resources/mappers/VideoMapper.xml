@@ -99,5 +99,20 @@
     <select id="selectVideoByAnimeId" resultMap="videoResultMap">
         SELECT * FROM video_metadata WHERE anime_id = #{animeId}
     </select>
+
+    <select id="recentUpdate" resultMap="videoResultMap">
+        WITH ranked_videos AS (
+        SELECT a.*, ROW_NUMBER() OVER(PARTITION BY a.anime_id ORDER BY a.join_time DESC) AS rn
+        FROM video_metadata a
+        LEFT JOIN anime b ON a.anime_id = b.animeId
+        WHERE b.isAir = true
+        )
+        SELECT *
+        FROM ranked_videos
+        WHERE rn = 1
+        ORDER BY join_time DESC
+        LIMIT 6;
+
+    </select>
 </mapper>
 

@@ -78,4 +78,9 @@ public class VideoServiceImpl implements VideoService {
         return videoMapper.getVideosFromAnime(animeId);
     }
 
+    @Override
+    public List<VideoVo> recentUpdate() {
+        return videoMapper.recentUpdate();
+    }
+
 }

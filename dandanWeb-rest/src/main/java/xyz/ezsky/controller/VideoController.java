@@ -47,7 +47,12 @@ public class VideoController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+    @GetMapping("/recentUpdate")
+    public ResponseEntity<List<VideoVo>> recentUpdate() {
+        List<VideoVo> videos = videoService.recentUpdate();
+        return new ResponseEntity<>(videos, HttpStatus.OK);
 
+    }
     @GetMapping
     public ResponseEntity<List<VideoVo>> getAllVideos() {
         List<VideoVo> videos = videoService.getAllVideos();

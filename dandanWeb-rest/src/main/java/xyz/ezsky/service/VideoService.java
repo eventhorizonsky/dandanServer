@@ -18,4 +18,6 @@ public interface VideoService {
     VideoVo getNotMatchedVideoByName(String fileName);
 
     List<VideoVo> getVideosFromAnime(String animeId);
+
+    List<VideoVo> recentUpdate();
 }
