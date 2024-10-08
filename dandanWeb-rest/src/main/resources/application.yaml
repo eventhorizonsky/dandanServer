@@ -1,31 +1,10 @@
-mybatis: # mybatis配置
+mybatis: #mybatis配置
   mapper-locations: classpath:mappers/*.xml
-
 spring:
   datasource:
     driver-class-name: org.sqlite.JDBC
     url: jdbc:sqlite:mydatabase.db
-
-  # 配置Gzip压缩和缓存策略
-  web:
-    resources:
-      chain:
-        enabled: true
-        strategy:
-          content:
-            enabled: true
-            paths: /**
-      cache:
-        cachecontrol:
-          max-age: 86400  # 缓存时间（秒）
-          must-revalidate: true  # 缓存必须重新验证
-        etag: true  # 启用ETag
-    compression:
-      enabled: true  # 启用Gzip压缩
-      mime-types: application/json,application/xml,text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/wasm  # 添加wasm的MIME类型
-      min-response-size: 1024  # 只对超过1KB的内容进行压缩
-
-server: # 程序访问端口号
+server: #程序访问端口号
   port: 8081
 danDanApi:
   match: https://api.dandanplay.net/api/v2/match

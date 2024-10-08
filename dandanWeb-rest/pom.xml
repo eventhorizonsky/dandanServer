@@ -189,6 +189,7 @@
                         <nonFilteredFileExtension>ttf</nonFilteredFileExtension>
                         <nonFilteredFileExtension>woff</nonFilteredFileExtension>
                         <nonFilteredFileExtension>woff2</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>wasm</nonFilteredFileExtension>
                     </nonFilteredFileExtensions>
                 </configuration>
             </plugin>
