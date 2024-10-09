@@ -16,3 +16,8 @@ database:
         file: createtable.sql
   file:
     path: app/config/database.db
+pagehelper:
+  helperDialect: sqlite
+  reasonable: true
+  supportMethodsArguments: true
+  params: count=countSql
