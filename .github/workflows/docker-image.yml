@@ -27,7 +27,7 @@ jobs:
 
     - name: Build frontend
       run: |
-        cd dandan-web
+        cd dandanweb
         pnpm install
         pnpm run build
 
