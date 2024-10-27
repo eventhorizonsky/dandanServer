@@ -34,7 +34,7 @@ jobs:
     - name: Copy frontend build to backend static resources
       run: |
         mkdir -p dandanWeb-rest/src/main/resources/static
-        cp -r dandan-web/dist/* dandanWeb-rest/src/main/resources/static/
+        cp -r dandanweb/dist/* dandanWeb-rest/src/main/resources/static/
 
     - name: Set up Maven
       uses: actions/setup-java@v2
