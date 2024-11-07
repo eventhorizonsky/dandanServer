@@ -1,0 +1,58 @@
+# .github/workflows/cicd.yml
+
+name: package and push docker
+
+on:
+  push:
+    branches:
+      - master  
+  pull_request:
+    branches:
+      - master  
+  repository_dispatch:  # 用于从 dandanweb 仓库触发
+    types: [dandanweb-push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install pnpm
+      run: npm install -g pnpm
+
+    - name: Clone frontend repository
+      run: git clone https://github.com/eventhorizonsky/dandanweb.git
+
+    - name: Build frontend
+      run: |
+        cd dandanweb
+        pnpm install
+        pnpm run build
+
+    - name: Copy frontend build to backend static resources
+      run: |
+        mkdir -p dandanWeb-rest/src/main/resources/static
+        cp -r dandanweb/dist/* dandanWeb-rest/src/main/resources/static/
+
+    - name: Set up Maven
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'temurin'
+        java-version: '11'
+
+    - name: Build backend with Maven
+      run: mvn clean package
+
+    - name: Login to Docker Hub
+      run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+    - name: Build Docker image
+      run: docker build -t ezsky333/dandanserver .
+
+    - name: Push Docker image to Docker Hub
+      run: docker push ezsky333/dandanserver
+
+    - name: Logout of Docker Hub
+      run: docker logout
