@@ -143,6 +143,8 @@ public class VideoScanner {
         RequestBody body = RequestBody.create(JSON.toJSONString(requestBody), MediaType.get("application/json"));
         Request request = new Request.Builder()
                 .url(url)
+                .addHeader("X-AppId","ezskyxyz")
+                .addHeader("X-AppSecret","H9GyRm6oFY1ppukjCH7z6WJwG23jGqRZ")
                 .post(body)
                 .build();
         try {
@@ -207,6 +209,8 @@ public class VideoScanner {
         String url = animeApi + "/" + animeDTO.getAnimeId();
         Request request = new Request.Builder()
                 .url(url)
+                .addHeader("X-AppId","ezskyxyz")
+                .addHeader("X-AppSecret","H9GyRm6oFY1ppukjCH7z6WJwG23jGqRZ")
                 .get()
                 .build();
         try {
