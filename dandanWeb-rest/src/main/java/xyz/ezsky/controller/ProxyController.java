@@ -31,6 +31,8 @@ public class ProxyController {
         Request httpRequest = new Request.Builder()
                 .url(externalUrl)
                 .addHeader("Authorization",request.getHeader("Authorization")==null?"":request.getHeader("Authorization"))
+                .addHeader("X-AppId","ezskyxyz")
+                .addHeader("X-AppSecret","H9GyRm6oFY1ppukjCH7z6WJwG23jGqRZ")
                 .build();
 
         try (Response response = client.newCall(httpRequest).execute()) {

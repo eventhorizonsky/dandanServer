@@ -4,6 +4,9 @@ package xyz.ezsky.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
@@ -23,9 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @RestController
 @Slf4j
@@ -160,8 +161,21 @@ public class VideoController {
     @GetMapping("/convert")
     public ResponseEntity<String> convertJsonToXml(@RequestParam String episodeId) {
         try {
+            OkHttpClient client = new OkHttpClient();
             RestTemplate restTemplate = new RestTemplate();
-            String jsonString = restTemplate.getForObject("https://api.dandanplay.net/api/v2/comment/" + episodeId + "?withRelated=true", String.class);
+            Map<String,String> header=new HashMap<>();
+            header.put("X-AppId","ezskyxyz");
+            header.put("X-AppSecret","H9GyRm6oFY1ppukjCH7z6WJwG23jGqRZ");
+            Request httpRequest = new Request.Builder()
+                    .url("https://api.dandanplay.net/api/v2/comment/" + episodeId + "?withRelated=true")
+                    .addHeader("X-AppId","ezskyxyz")
+                    .addHeader("X-AppSecret","H9GyRm6oFY1ppukjCH7z6WJwG23jGqRZ")
+                    .build();
+            Response response = client.newCall(httpRequest).execute();
+            String jsonString = null;
+            if (response.body() != null) {
+                jsonString = response.body().string();
+            }
 
             // Convert JSON to XML
             String xmlString = convertJsonToXmlString(jsonString);
