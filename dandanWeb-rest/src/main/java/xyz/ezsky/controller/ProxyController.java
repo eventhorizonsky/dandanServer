@@ -53,7 +53,9 @@ public class ProxyController {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-
+        headers.add("Authorization",request.getHeader("Authorization")==null?"":request.getHeader("Authorization"));
+        headers.add("X-AppId","ezskyxyz");
+        headers.add("X-AppSecret","H9GyRm6oFY1ppukjCH7z6WJwG23jGqRZ");
         HttpEntity<Object> requestEntity = new HttpEntity<>(requestBody, headers);
 
             return restTemplate.postForEntity(externalUrl, requestEntity, Object.class);
