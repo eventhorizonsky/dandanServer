@@ -40,7 +40,35 @@ public class FileTool {
             return null; // 文件不存在或不是普通文件，返回null表示获取失败
         }
     }
+    // 新增方法：将MKV转码为MP4流
+    public static InputStream transcodeMkvToMp4Stream(File mkvFile) throws IOException {
+        ProcessWrapper ffmpeg = new DefaultFFMPEGLocator().createExecutor();
+        ffmpeg.addArgument("-i");
+        ffmpeg.addArgument(mkvFile.getAbsolutePath());
+        ffmpeg.addArgument("-c:v");
+        ffmpeg.addArgument("libx264");
+        ffmpeg.addArgument("-preset");
+        ffmpeg.addArgument("ultrafast");
+        ffmpeg.addArgument("-f");
+        ffmpeg.addArgument("mp4");
+        ffmpeg.addArgument("pipe:1"); // 输出到标准输出
 
+        ffmpeg.execute();
+
+        // 处理错误流避免阻塞
+        new Thread(() -> {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(ffmpeg.getErrorStream()))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    log.debug("FFmpeg: {}", line);
+                }
+            } catch (IOException e) {
+                log.error("Error reading FFmpeg error stream", e);
+            }
+        }).start();
+
+        return ffmpeg.getInputStream();
+    }
     public static List<Subtitle> scanMkv(VideoVo videoVo){
         File videoFile = new File(videoVo.getFilePath());
         List<Subtitle> subtitles = new ArrayList<>();

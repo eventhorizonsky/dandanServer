@@ -21,6 +21,7 @@ import xyz.ezsky.entity.vo.PlayerVo;
 import xyz.ezsky.entity.vo.Subtitle;
 import xyz.ezsky.entity.vo.VideoVo;
 import xyz.ezsky.service.VideoService;
+import xyz.ezsky.utils.FileTool;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -81,7 +82,11 @@ public class VideoController {
      * 读取视频文件
      */
     @GetMapping("/{id}/stream")
-    public ResponseEntity displayMp4(@PathVariable Integer id,@RequestHeader(value = "Range", required = false) String rangeHeader, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public ResponseEntity<Object> displayMp4(
+            @PathVariable Integer id,
+            @RequestHeader(value = "Range", required = false) String rangeHeader,
+            HttpServletResponse response) throws IOException {
+
         VideoVo videoVo = videoService.getVideoById(id);
         File videoFile = new File(videoVo.getFilePath());
 
@@ -89,9 +94,27 @@ public class VideoController {
             return ResponseEntity.notFound().build();
         }
 
-        long fileSize = videoFile.length();
+        // 处理MKV文件转码
+        if ("mkv".equalsIgnoreCase(videoVo.getFileExtension())) {
+            log.info("请求MKV文件");
+            // MKV文件不支持范围请求
+            if (rangeHeader != null) {
+                return ResponseEntity.status(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
+                        .header("Content-Range", "bytes */" + videoFile.length())
+                        .build();
+            }
 
-        InputStream inputStream;
+            InputStream transcodeStream = FileTool.transcodeMkvToMp4Stream(videoFile);
+            InputStreamResource resource = new InputStreamResource(transcodeStream);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Content-Disposition", "inline; filename=\"" + videoVo.getFileName() + ".mp4\"")
+                    .body(resource);
+        }
+
+        // 原始MP4处理逻辑
+        long fileSize = videoFile.length();
         long start = 0;
         long end = fileSize - 1;
 
@@ -101,22 +124,40 @@ public class VideoController {
             end = range.length > 1 ? Long.parseLong(range[1]) : fileSize - 1;
         }
 
-        inputStream = new FileInputStream(videoFile);
-        inputStream.skip(start);
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(videoFile, "r")) {
+            randomAccessFile.seek(start);
+            InputStream inputStream = new BufferedInputStream(
+                    new InputStream() {
+                        @Override
+                        public int read() throws IOException {
+                            return randomAccessFile.read();
+                        }
 
-        long contentLength = end - start + 1;
+                        @Override
+                        public int read(byte[] b, int off, int len) throws IOException {
+                            return randomAccessFile.read(b, off, len);
+                        }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaTypeFactory.getMediaType(videoFile.getName()).orElse(MediaType.APPLICATION_OCTET_STREAM));
-        headers.setContentLength(contentLength);
-        headers.set("Content-Range", "bytes " + start + "-" + end + "/" + fileSize);
+                        @Override
+                        public void close() throws IOException {
+                            randomAccessFile.close();
+                        }
+                    }
+            );
 
-        InputStreamResource resource = new InputStreamResource(inputStream);
+            long contentLength = end - start + 1;
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaTypeFactory.getMediaType(videoFile.getName())
+                    .orElse(MediaType.APPLICATION_OCTET_STREAM));
+            headers.setContentLength(contentLength);
+            headers.set("Content-Range", "bytes " + start + "-" + end + "/" + fileSize);
 
-        return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
-                .headers(headers)
-                .body(resource);
+            InputStreamResource resource = new InputStreamResource(inputStream);
 
+            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
+                    .headers(headers)
+                    .body(resource);
+        }
     }
     @GetMapping("/Subtitle/{id}")
     public ResponseEntity<FileSystemResource> getOutSrt(@PathVariable Integer id,HttpServletRequest request, HttpServletResponse response) {
